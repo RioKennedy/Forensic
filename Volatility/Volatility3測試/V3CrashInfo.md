@@ -5,6 +5,12 @@
 ```text
 This plugin requires a Windows crash dump
 ```
+此錯誤代表該 Plugin 只能用於 Windows Crash Dump 檔案，例如 MEMORY.DMP 或 .dmp 檔案。
+
+本次分析的檔案為 OtterCTF.vmem，屬於一般記憶體映像檔，並不是 Windows Crash Dump 格式，因此無法使用 windows.crashinfo.Crashinfo 進行分析。
+
+這不代表記憶體映像檔損壞，也不影響後續分析。
+
 ```
 D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.crashinfo.Crashinfo
 Volatility 3 Framework 2.5.0
