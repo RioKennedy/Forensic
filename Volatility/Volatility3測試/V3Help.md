@@ -1,4 +1,4 @@
-'''
+```
 D:\Forensic\G140A006\VolatilityWorkbench>vol.exe -h
 Volatility 3 Framework 2.5.0
 usage: volatility [-h] [-c CONFIG] [--parallelism [{processes,threads,off}]] [-e EXTEND] [-p PLUGIN_DIRS]
@@ -237,4 +237,4 @@ Plugins:
     windows.virtmap.VirtMap
                         Lists virtual mapped sections.
     yarascan.YaraScan   Scans kernel memory using yara rules (string or file).
-'''
+```
