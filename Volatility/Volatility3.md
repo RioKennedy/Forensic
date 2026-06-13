@@ -19,7 +19,7 @@
 | [`windows.crashinfo.Crashinfo`](Volatility3測試/V3CrashInfo.md) | 顯示 Windows crash dump 資訊 | 分析當機傾印檔 |
 | [`windows.statistics.Statistics`](Volatility3測試/V3Statistics.md) | 顯示記憶體空間統計資訊 | 初步了解記憶體結構 |
 | [`windows.memmap.Memmap`](Volatility3測試/V3Memmap.md) | 顯示記憶體映射 | 查看虛擬記憶體對應情況 |
-| `windows.virtmap.VirtMap` | 顯示虛擬記憶體映射區段 | 輔助分析記憶體位址 |
+| [`windows.virtmap.VirtMap`](Volatility3測試/V3Virtmap.md) | 顯示虛擬記憶體映射區段 | 輔助分析記憶體位址 |
 
 ---
 
