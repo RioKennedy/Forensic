@@ -70,40 +70,267 @@ Virtual Physical        Size    Offset in File  File output
 ....
 .....
 ```
-# windows.memmap.Memmap 說明
+# windows.memmap.Memmap 分析說明
 
 ## 1. Plugin 功能說明
 
 `windows.memmap.Memmap` 是 Volatility 3 中用來顯示記憶體映射關係的 Plugin。
 
-它主要會列出 Windows 記憶體中的：
+它主要會列出記憶體映像檔中的：
 
-- 虛擬位址 Virtual Address
-- 實體位址 Physical Address
-- 記憶體大小 Size
-- 記憶體是否可以被 Dump
-- 對應的記憶體區段資訊
+* 虛擬位址 Virtual Address
+* 實體位址 Physical Address
+* 記憶體區段大小 Size
+* 記憶體位址對應關係
+* 是否可以將該記憶體區段輸出
 
-簡單來說，`memmap` 是用來查看記憶體如何被映射到不同位址的工具。
+簡單來說，`memmap` 是用來查看 Windows 記憶體中「虛擬記憶體位址」如何對應到「實體記憶體位址」的工具。
 
 ---
 
 ## 2. 為什麼結果很多？
 
-`windows.memmap.Memmap` 的輸出通常會非常多，這是正常現象。
+執行 `windows.memmap.Memmap` 後，結果通常會非常多，這是正常情況。
 
-原因是 Windows 系統中每個 Process 都會有大量記憶體區段，例如：
+原因是 Windows 系統在執行時，每個 Process 都會有自己的記憶體空間，而且每個 Process 內又會包含許多不同的記憶體區段，例如：
 
-- 程式本身的記憶體區段
-- DLL 載入區段
-- Heap
-- Stack
-- Shared Memory
-- Kernel Memory
-- Cache
-- Memory Mapped File
+* 程式本身的記憶體區段
+* DLL 載入區段
+* Heap 記憶體
+* Stack 記憶體
+* Shared Memory
+* Memory Mapped File
+* Kernel Memory
+* Cache
 
 因此，如果直接執行：
 
 ```bash
 .\vol.exe -f .\OtterCTF.vmem windows.memmap.Memmap
+```
+
+Volatility 會列出大量記憶體映射資料，導致結果非常龐大，不適合人工逐行查看。
+
+---
+
+## 3. 常見欄位說明
+
+`windows.memmap.Memmap` 的結果通常會包含以下欄位：
+
+| 欄位          | 說明            |
+| ----------- | ------------- |
+| PID         | 行程編號          |
+| Process     | 行程名稱          |
+| Virtual     | 虛擬記憶體位址       |
+| Physical    | 實體記憶體位址       |
+| Size        | 記憶體區段大小       |
+| Offset      | 在記憶體映像檔中的偏移位置 |
+| File output | 是否可以輸出記憶體內容   |
+
+---
+
+## 4. 重要欄位分析
+
+### 4.1 PID
+
+`PID` 是 Process ID，也就是行程編號。
+
+在記憶體鑑識中，PID 很重要，因為我們通常會先透過其他 Plugin 找出可疑行程，再針對特定 PID 進行深入分析。
+
+例如：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.memmap.Memmap --pid 708
+```
+
+這樣可以只分析 PID 708 的記憶體映射，避免結果太多。
+
+---
+
+### 4.2 Process
+
+`Process` 是行程名稱。
+
+它可以協助分析人員知道目前這些記憶體區段屬於哪一個行程。
+
+例如，如果某個可疑行程名稱是：
+
+```text
+malware.exe
+```
+
+或是不正常的位置出現：
+
+```text
+explorer.exe
+cmd.exe
+powershell.exe
+```
+
+就可以針對該 Process 的記憶體進一步分析。
+
+---
+
+### 4.3 Virtual Address
+
+`Virtual Address` 是虛擬記憶體位址。
+
+每個 Process 在 Windows 中都有自己的虛擬記憶體空間，因此不同 Process 可能會看到相同的虛擬位址，但實際上對應到不同的實體記憶體位置。
+
+在鑑識分析中，Virtual Address 可以用來定位某個 Process 內部的記憶體區段。
+
+如果後續 `malfind` 或 `vadinfo` 發現某段可疑記憶體，就可以利用 Virtual Address 進一步比對。
+
+---
+
+### 4.4 Physical Address
+
+`Physical Address` 是實體記憶體位址。
+
+Volatility 會透過 Windows 的分頁結構，把 Process 的 Virtual Address 轉換成 Physical Address。
+
+如果某個 Virtual Address 找不到對應的 Physical Address，可能代表：
+
+* 該記憶體頁面不存在於目前記憶體映像檔中
+* 該記憶體頁面已被交換出去
+* 該記憶體頁面無法被解析
+* 記憶體擷取時沒有完整保存該區段
+
+---
+
+### 4.5 Size
+
+`Size` 表示該記憶體區段的大小。
+
+如果某些記憶體區段特別大，可能代表：
+
+* 程式載入大型模組
+* Process 使用大量 Heap
+* 有大型 Memory Mapped File
+* 有可疑記憶體配置
+
+但是單看 Size 不能直接判斷是否為惡意，需要搭配其他 Plugin 交叉分析。
+
+---
+
+## 5. 鑑識分析重點
+
+`windows.memmap.Memmap` 的重點不是直接找出惡意程式，而是用來輔助分析特定 Process 的記憶體配置。
+
+它比較重要的用途包含：
+
+1. 查看某個 Process 的記憶體映射範圍
+2. 確認虛擬位址與實體位址的對應關係
+3. 輔助 Dump 特定記憶體區段
+4. 搭配 `malfind` 分析可疑記憶體
+5. 搭配 `vadinfo` 查看 Process 的 VAD 記憶體區段
+
+---
+
+## 6. 不建議直接分析全部結果
+
+如果直接執行：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.memmap.Memmap
+```
+
+結果會非常多，因此不建議人工逐行分析全部內容。
+
+比較好的方法是先透過以下 Plugin 找出可疑 PID：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.pslist.PsList
+.\vol.exe -f .\OtterCTF.vmem windows.pstree.PsTree
+.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine
+.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan
+.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind
+```
+
+找到可疑 PID 後，再針對單一 PID 執行：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.memmap.Memmap --pid <PID>
+```
+
+例如：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.memmap.Memmap --pid 708
+```
+
+這樣可以縮小分析範圍，讓結果更容易判讀。
+
+---
+
+## 7. 與其他 Plugin 的關係
+
+`windows.memmap.Memmap` 通常不會單獨使用，而是搭配其他 Plugin 一起分析。
+
+| 搭配 Plugin                     | 用途                     |
+| ----------------------------- | ---------------------- |
+| `windows.pslist.PsList`       | 找出目前活動中的 Process       |
+| `windows.pstree.PsTree`       | 查看 Process 父子關係        |
+| `windows.cmdline.CmdLine`     | 查看 Process 執行參數        |
+| `windows.netscan.NetScan`     | 找出有網路連線的 Process       |
+| `windows.malfind.Malfind`     | 找出可能被注入的記憶體區段          |
+| `windows.vadinfo.VadInfo`     | 查看 Process 的 VAD 記憶體資訊 |
+| `windows.dumpfiles.DumpFiles` | Dump 記憶體中的檔案內容         |
+
+---
+
+## 8. 建議分析流程
+
+建議分析流程如下：
+
+```text
+windows.info.Info
+        ↓
+windows.pslist.PsList
+        ↓
+windows.pstree.PsTree
+        ↓
+windows.cmdline.CmdLine
+        ↓
+windows.netscan.NetScan
+        ↓
+windows.malfind.Malfind
+        ↓
+windows.memmap.Memmap --pid <可疑 PID>
+```
+
+也就是說，先找出可疑行程，再針對特定 PID 使用 `memmap` 進一步分析。
+
+---
+
+## 9. 本次分析判斷
+
+本次如果執行 `windows.memmap.Memmap` 後產生大量結果，屬於正常現象。
+
+因為 `memmap` 會列出大量虛擬記憶體與實體記憶體的對應關係，而 Windows 系統本身與各個 Process 都會產生許多記憶體區段。
+
+因此，本次不建議直接逐行分析全部 `memmap` 結果，而是應該先透過 `pslist`、`pstree`、`cmdline`、`netscan` 或 `malfind` 找出可疑 Process，再針對特定 PID 執行 `memmap`。
+
+---
+
+## 10. 報告用結論
+
+本次使用 Volatility 3 的 `windows.memmap.Memmap` Plugin 進行記憶體映射分析。該 Plugin 主要用於顯示虛擬記憶體位址與實體記憶體位址之間的對應關係，可協助分析人員了解特定 Process 的記憶體配置。
+
+由於 Windows 系統與各個 Process 都會包含大量記憶體區段，因此直接執行 `memmap` 會產生非常多結果，這屬於正常現象。此 Plugin 不適合用來人工逐行檢查全部輸出，也不會直接指出哪個行程是惡意程式。
+
+在鑑識分析中，`memmap` 比較適合作為輔助工具。建議先透過 `pslist`、`pstree`、`cmdline`、`netscan` 或 `malfind` 找出可疑 PID，再針對該 PID 使用 `memmap` 進行深入分析。
+
+---
+
+## 11. 簡短結論
+
+`windows.memmap.Memmap` 的結果很多是正常的，因為它會列出大量記憶體位址映射資料。
+
+此 Plugin 的主要用途不是直接找惡意程式，而是輔助分析特定 Process 的記憶體配置。
+
+因此，本次分析不建議直接檢查全部 `memmap` 結果，而是應先找出可疑 PID，再使用以下指令進行針對性分析：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.memmap.Memmap --pid <PID>
+```
