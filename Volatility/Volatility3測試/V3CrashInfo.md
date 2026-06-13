@@ -1,3 +1,6 @@
+## 測試內容
+ - .\vol.exe -f .\OtterCTF.vmem windows.crashinfo.Crashinfo
+
 ## windows.crashinfo.Crashinfo 執行結果
 
 執行 `windows.crashinfo.Crashinfo` 時，Volatility 顯示錯誤訊息：
