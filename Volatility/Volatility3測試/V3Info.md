@@ -497,23 +497,3 @@ Sat Nov 20 09:30:02 2010
 透過 `windows.info.Info` 可以確認，`OtterCTF.vmem` 是一份來自 Windows 7 SP1 64-bit 系統的記憶體映像檔。
 
 Volatility 成功辨識 Kernel Base、DTB、Windows Build 版本與 Symbol 檔案，代表此記憶體映像檔可以被正常解析。
-
-因此，後續可以繼續進行其他 Windows 記憶體鑑識分析，例如：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.pslist.PsList
-.\vol.exe -f .\OtterCTF.vmem windows.pstree.PsTree
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine
-.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan
-.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind
-```
-
-整體來說，`windows.info.Info` 的主要價值在於確認記憶體映像檔的基本系統環境，並作為後續分析流程的起點。
-
----
-
-## 7. 簡短報告寫法
-
-本次使用 Volatility 3 的 `windows.info.Info` Plugin 針對 `OtterCTF.vmem` 記憶體映像檔進行初步分析。分析結果顯示，該記憶體映像檔來自 Windows 7 SP1 64-bit 系統，Kernel Build 為 7601，系統根目錄為 `C:\Windows`，記憶體擷取當下的系統時間為 `2018-08-04 19:34:22`。
-
-此外，Volatility 成功載入對應的 Windows Symbol 檔案，代表此記憶體映像檔能夠被正常解析。透過此結果，可以確認後續能夠繼續進行行程、網路連線、DLL、Registry 與惡意程式注入等記憶體鑑識分析。
