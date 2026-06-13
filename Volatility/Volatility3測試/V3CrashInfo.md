@@ -4,7 +4,7 @@
 
 ```text
 This plugin requires a Windows crash dump
-
+```
 ```
 D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.crashinfo.Crashinfo
 Volatility 3 Framework 2.5.0
