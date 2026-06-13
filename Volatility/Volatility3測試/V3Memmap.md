@@ -70,3 +70,40 @@ Virtual Physical        Size    Offset in File  File output
 ....
 .....
 ```
+# windows.memmap.Memmap 說明
+
+## 1. Plugin 功能說明
+
+`windows.memmap.Memmap` 是 Volatility 3 中用來顯示記憶體映射關係的 Plugin。
+
+它主要會列出 Windows 記憶體中的：
+
+- 虛擬位址 Virtual Address
+- 實體位址 Physical Address
+- 記憶體大小 Size
+- 記憶體是否可以被 Dump
+- 對應的記憶體區段資訊
+
+簡單來說，`memmap` 是用來查看記憶體如何被映射到不同位址的工具。
+
+---
+
+## 2. 為什麼結果很多？
+
+`windows.memmap.Memmap` 的輸出通常會非常多，這是正常現象。
+
+原因是 Windows 系統中每個 Process 都會有大量記憶體區段，例如：
+
+- 程式本身的記憶體區段
+- DLL 載入區段
+- Heap
+- Stack
+- Shared Memory
+- Kernel Memory
+- Cache
+- Memory Mapped File
+
+因此，如果直接執行：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.memmap.Memmap
