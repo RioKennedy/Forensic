@@ -310,27 +310,3 @@ windows.memmap.Memmap --pid <可疑 PID>
 因為 `memmap` 會列出大量虛擬記憶體與實體記憶體的對應關係，而 Windows 系統本身與各個 Process 都會產生許多記憶體區段。
 
 因此，本次不建議直接逐行分析全部 `memmap` 結果，而是應該先透過 `pslist`、`pstree`、`cmdline`、`netscan` 或 `malfind` 找出可疑 Process，再針對特定 PID 執行 `memmap`。
-
----
-
-## 10. 報告用結論
-
-本次使用 Volatility 3 的 `windows.memmap.Memmap` Plugin 進行記憶體映射分析。該 Plugin 主要用於顯示虛擬記憶體位址與實體記憶體位址之間的對應關係，可協助分析人員了解特定 Process 的記憶體配置。
-
-由於 Windows 系統與各個 Process 都會包含大量記憶體區段，因此直接執行 `memmap` 會產生非常多結果，這屬於正常現象。此 Plugin 不適合用來人工逐行檢查全部輸出，也不會直接指出哪個行程是惡意程式。
-
-在鑑識分析中，`memmap` 比較適合作為輔助工具。建議先透過 `pslist`、`pstree`、`cmdline`、`netscan` 或 `malfind` 找出可疑 PID，再針對該 PID 使用 `memmap` 進行深入分析。
-
----
-
-## 11. 簡短結論
-
-`windows.memmap.Memmap` 的結果很多是正常的，因為它會列出大量記憶體位址映射資料。
-
-此 Plugin 的主要用途不是直接找惡意程式，而是輔助分析特定 Process 的記憶體配置。
-
-因此，本次分析不建議直接檢查全部 `memmap` 結果，而是應先找出可疑 PID，再使用以下指令進行針對性分析：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.memmap.Memmap --pid <PID>
-```
