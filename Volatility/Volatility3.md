@@ -15,7 +15,7 @@
 
 | Plugin | 功能說明 | 用途 |
 |---|---|---|
-| [`windows.info.Info`](Volatility3測試/V3NetScan.md) | 顯示記憶體映像檔的 Windows 系統與核心資訊 | 確認 OS 版本、Kernel、Symbol 是否正確 |
+| [`windows.info.Info`](Volatility3測試/V3Info.md) | 顯示記憶體映像檔的 Windows 系統與核心資訊 | 確認 OS 版本、Kernel、Symbol 是否正確 |
 | `windows.crashinfo.Crashinfo` | 顯示 Windows crash dump 資訊 | 分析當機傾印檔 |
 | `windows.statistics.Statistics` | 顯示記憶體空間統計資訊 | 初步了解記憶體結構 |
 | `windows.memmap.Memmap` | 顯示記憶體映射 | 查看虛擬記憶體對應情況 |
