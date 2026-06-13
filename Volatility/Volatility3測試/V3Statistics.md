@@ -1,3 +1,6 @@
+# 測試內容
+- vol.exe -f .\OtterCTF.vmem windows.statistics.Statistics
+
 ```
 D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.statistics.Statistics
 Volatility 3 Framework 2.5.0
