@@ -70,8 +70,8 @@ vol.exe -f memory.vmem windows.verinfo.VerInfo
 
 | Plugin | 功能說明 | 用途 |
 |---|---|---|
-| `windows.netscan.NetScan` | 掃描 Windows 網路連線物件 | 找 TCP/UDP 連線、可疑連外 |
-| `windows.netstat.NetStat` | 透過網路追蹤結構列出連線 | 類似 netstat 的效果 |
+| [`windows.netscan.NetScan`](Volatility3測試/V3NetScan.md) | 掃描 Windows 網路連線物件 | 找 TCP/UDP 連線、可疑連外 |
+| [`windows.netstat.NetStat`](Volatility3測試/V3NetStat.md) | 透過網路追蹤結構列出連線 | 類似 netstat 的效果 |
 
 ### 常用指令
 
