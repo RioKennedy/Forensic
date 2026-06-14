@@ -463,105 +463,164 @@ Pid     Process Base    InLoad  InInit  InMem   MappedPath
 
 # windows.ldrmodules.LdrModules 分析
 
-## 1. 執行指令
+## 1. Plugin 分析目的
 
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.ldrmodules.LdrModules --pid 3820
-.\vol.exe -f .\OtterCTF.vmem windows.ldrmodules.LdrModules --pid 3720
-.\vol.exe -f .\OtterCTF.vmem windows.ldrmodules.LdrModules --pid 708
-.\vol.exe -f .\OtterCTF.vmem windows.ldrmodules.LdrModules --pid 3880
-.\vol.exe -f .\OtterCTF.vmem windows.ldrmodules.LdrModules --pid 3856
-```
+`windows.ldrmodules.LdrModules` 主要用來檢查 Process 載入的模組是否存在於 Windows Loader List 中。
+
+分析時重點不是單純看 `True` 或 `False`，而是要觀察：
+
+* 模組路徑是否合理
+* 是否有從 Temp 目錄載入模組
+* 是否有偽裝成正常程式的路徑
+* 是否有大量不尋常的第三方模組
+* 模組是否與該 Process 的用途相符
 
 ---
 
-## 2. Plugin 功能簡述
-
-`windows.ldrmodules.LdrModules` 用來檢查 Process 中載入模組是否存在於不同的 Loader List。
-
-主要觀察欄位：
+## 2. 欄位簡要說明
 
 | 欄位           | 說明                              |
 | ------------ | ------------------------------- |
-| `InLoad`     | 是否出現在 Load Order List           |
-| `InInit`     | 是否出現在 Initialization Order List |
-| `InMem`      | 是否出現在 Memory Order List         |
-| `MappedPath` | 模組路徑                            |
+| `InLoad`     | 模組是否在 Load Order List           |
+| `InInit`     | 模組是否在 Initialization Order List |
+| `InMem`      | 模組是否在 Memory Order List         |
+| `MappedPath` | 模組對應路徑                          |
 
-如果模組出現 `False False False`，代表它不在一般 Loader List 中，但仍被記憶體掃描到，需要進一步判斷是否正常或可疑。
-
----
-
-## 3. 結果重點整理
-
-|  PID | Process                     | 重要發現                                                    | 判斷                |
-| ---: | --------------------------- | ------------------------------------------------------- | ----------------- |
-| 3820 | `Rick And Morty`            | 主程式為 `C:\Torrents\Rick And Morty season 1 download.exe` | 高度可疑              |
-| 3720 | `vmware-tray.exe`           | 從 `Temp\RarSFX0` 執行，並載入 .NET 模組                         | 可疑子行程             |
-|  708 | `LunarMS.exe`               | 載入多個 `C:\Users\Rick\AppData\Local\Temp\nst*.tmp`        | 需要注意              |
-| 3880 | `WebCompanionInstaller.exe` | 載入 WebCompanion、.NET、WMI、壓縮相關模組                         | 安裝/更新行為           |
-| 3856 | `WebCompanion.exe`          | 載入多個 Lavasoft 模組                                        | WebCompanion 程式行為 |
+`False False False` 不一定代表惡意，仍需搭配路徑與 Process 行為判斷。
 
 ---
 
-## 4. 關鍵發現
+## 3. PID 3820 - Rick And Morty 分析
 
-### 4.1 Rick And Morty
+### 3.1 主要發現
 
 ```text
-3820 Rick And Morty
+Process: Rick And Morty
+Path: \Torrents\Rick And Morty season 1 download.exe
+```
+
+此 Process 的主程式位於 `\Torrents` 目錄，檔名看起來像影片下載，但實際上是 `.exe` 可執行檔。
+
+### 3.2 模組載入狀況
+
+`Rick And Morty` 載入大量 Windows 32-bit 系統模組，例如：
+
+```text
+\Windows\SysWOW64\kernel32.dll
+\Windows\SysWOW64\user32.dll
+\Windows\SysWOW64\shell32.dll
+\Windows\SysWOW64\wininet.dll
+\Windows\SysWOW64\urlmon.dll
+\Windows\SysWOW64\crypt32.dll
+```
+
+其中 `wininet.dll`、`urlmon.dll`、`crypt32.dll` 代表程式可能具備網路、URL 存取或憑證相關功能。
+
+### 3.3 分析判斷
+
+此 Process 的可疑點不在於載入了特殊 DLL，而是在於主程式本身的命名與路徑。
+
+```text
 \Torrents\Rick And Morty season 1 download.exe
 ```
 
-重點：
+此檔案名稱具有偽裝性，容易讓使用者誤以為是影片檔案，但實際上是執行檔。因此，`Rick And Morty` 是本次 `LdrModules` 分析中最高優先的可疑 Process。
 
-* 主程式仍確認為 torrent 下載目錄中的 `.exe`
-* 檔名偽裝成影片下載
-* 載入多個 Windows 32-bit 系統 DLL
-* 沒看到明顯第三方可疑 DLL，但主程式本身已高度可疑
+### 3.4 判斷結果
 
-判斷：
-
-```text
-Rick And Morty season 1 download.exe 仍是本次最高優先分析目標。
-```
+| 項目    | 判斷               |
+| ----- | ---------------- |
+| 主程式路徑 | 可疑               |
+| 檔名    | 偽裝成影片下載          |
+| 載入模組  | 多數為 Windows 系統模組 |
+| 可疑程度  | 高                |
 
 ---
 
-### 4.2 vmware-tray.exe
+## 4. PID 3720 - vmware-tray.exe 分析
+
+### 4.1 主要發現
 
 ```text
-3720 vmware-tray.ex
-\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
+Process: vmware-tray.exe
+Path: \Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
 ```
 
-重點：
+此 Process 名稱看似 VMware Tools 相關程式，但執行路徑位於使用者 Temp 目錄。
 
-* 路徑位於 `Temp\RarSFX0`
-* 不屬於正常 VMware Tools 安裝路徑
-* 載入多個 .NET Framework 模組，例如 `clr.dll`、`mscoree.dll`、`System.Windows.Forms`
-* 與前面 `pstree`、`joblinks` 結果相符
-
-判斷：
+正常 VMware Tools 程式通常應位於：
 
 ```text
-vmware-tray.exe 很可能是 Rick And Morty 釋放或啟動的可疑子程式。
+C:\Program Files\VMware\VMware Tools\
 ```
+
+但本次發現的路徑是：
+
+```text
+C:\Users\Rick\AppData\Local\Temp\RarSFX0\
+```
+
+### 4.2 模組載入狀況
+
+`vmware-tray.exe` 載入多個 .NET Framework 相關模組：
+
+```text
+\Windows\Microsoft.NET\Framework\v4.0.30319\clr.dll
+\Windows\Microsoft.NET\Framework\v4.0.30319\clrjit.dll
+\Windows\Microsoft.NET\Framework\v4.0.30319\mscoreei.dll
+\Windows\assembly\NativeImages_v4.0.30319_32\System.Windows.Forms\
+\Windows\assembly\NativeImages_v4.0.30319_32\System.Drawing\
+```
+
+這代表該程式很可能是 .NET 程式，並且可能具有圖形介面功能。
+
+### 4.3 分析判斷
+
+`vmware-tray.exe` 的名稱具有偽裝性，因為它看起來像 VMware 元件，但實際執行位置並非 VMware 正常安裝目錄。
+
+`RarSFX0` 通常與自解壓縮檔或臨時釋放檔案有關，因此此程式可能是由其他可疑程式釋放出來後執行。
+
+### 4.4 判斷結果
+
+| 項目    | 判斷                  |
+| ----- | ------------------- |
+| 主程式路徑 | 高度可疑                |
+| 檔名    | 偽裝成 VMware 元件       |
+| 載入模組  | .NET Framework 相關模組 |
+| 可疑程度  | 高                   |
 
 ---
 
-### 4.3 LunarMS.exe
+## 5. PID 708 - LunarMS.exe 分析
+
+### 5.1 主要發現
 
 ```text
-708 LunarMS.exe
-\Nexon\MapleStory\LunarMS.exe
+Process: LunarMS.exe
+Path: \Nexon\MapleStory\LunarMS.exe
 ```
 
-重點：
+此 Process 位於 MapleStory 相關目錄，從主程式路徑來看，較像遊戲程式。
 
-* 主要路徑屬於 MapleStory 相關目錄
-* 載入多個遊戲相關 DLL，例如 `Canvas.dll`、`PCOM.dll`、`Sound_DX8.dll`
-* 但同時出現多個 Temp `.tmp` 模組：
+### 5.2 遊戲相關模組
+
+`LunarMS.exe` 載入多個遊戲相關模組，例如：
+
+```text
+\Nexon\MapleStory\ZLZ.dll
+\Nexon\MapleStory\nmconew.dll
+\Nexon\MapleStory\nmcogame.dll
+\Nexon\MapleStory\Canvas.dll
+\Nexon\MapleStory\PCOM.dll
+\Nexon\MapleStory\Gr2D_DX8.dll
+\Nexon\MapleStory\Sound_DX8.dll
+```
+
+這些模組與遊戲執行環境相符。
+
+### 5.3 Temp 模組
+
+但此 Process 同時載入多個使用者 Temp 目錄下的 `.tmp` 模組：
 
 ```text
 \Users\Rick\AppData\Local\Temp\nstB3C5.tmp
@@ -576,46 +635,96 @@ vmware-tray.exe 很可能是 Rick And Morty 釋放或啟動的可疑子程式。
 \Users\Rick\AppData\Local\Temp\nstB395.tmp
 ```
 
-判斷：
+### 5.4 分析判斷
 
-```text
-LunarMS.exe 可能是遊戲程式，但載入多個 Temp .tmp 模組，建議用 malfind 補充確認。
-```
+`LunarMS.exe` 本身不像 `Rick And Morty` 那樣直接可疑，但載入多個 Temp `.tmp` 模組需要注意。
 
----
+這些 `.tmp` 模組可能是遊戲保護、安裝暫存、外掛、補丁或臨時載入模組。但在鑑識分析中，從 Temp 載入模組仍然需要進一步確認，因為惡意程式也常使用 Temp 目錄放置或載入模組。
 
-### 4.4 WebCompanionInstaller.exe
+### 5.5 判斷結果
 
-```text
-3880 WebCompanionIn
-\Program Files (x86)\Lavasoft\Web Companion\Application\WebCompanionInstaller.exe
-```
-
-重點：
-
-* 載入 .NET Framework v2.0 相關模組
-* 載入 WMI 相關模組，例如 `wbemprox.dll`、`wbemsvc.dll`、`fastprox.dll`
-* 載入 `ICSharpCode.SharpZipLib.dll`
-* 前面已觀察到它啟動多個 `sc.exe`
-
-判斷：
-
-```text
-WebCompanionInstaller.exe 可能正在進行安裝、更新、解壓縮或服務操作。
-```
+| 項目             | 判斷              |
+| -------------- | --------------- |
+| 主程式路徑          | 較合理             |
+| 遊戲 DLL         | 與 MapleStory 相符 |
+| Temp `.tmp` 模組 | 需要注意            |
+| 可疑程度           | 中               |
 
 ---
 
-### 4.5 WebCompanion.exe
+## 6. PID 3880 - WebCompanionInstaller.exe 分析
+
+### 6.1 主要發現
 
 ```text
-3856 WebCompanion.e
-\Program Files (x86)\Lavasoft\Web Companion\Application\WebCompanion.exe
+Process: WebCompanionInstaller.exe
+Path: \Program Files (x86)\Lavasoft\Web Companion\Application\WebCompanionInstaller.exe
 ```
 
-重點：
+此 Process 為 WebCompanion 安裝或更新程式。
 
-* 載入多個 Lavasoft 模組：
+### 6.2 模組載入特徵
+
+`WebCompanionInstaller.exe` 載入多種類型模組：
+
+```text
+.NET Framework 模組
+WMI 相關模組
+Web / HTTP 相關模組
+壓縮函式庫
+ServiceProcess 相關模組
+```
+
+較重要的模組包括：
+
+```text
+\Windows\SysWOW64\wbem\wbemprox.dll
+\Windows\SysWOW64\wbem\wbemsvc.dll
+\Windows\SysWOW64\wbem\fastprox.dll
+\Windows\SysWOW64\winhttp.dll
+\Windows\SysWOW64\httpapi.dll
+\Program Files (x86)\Lavasoft\Web Companion\Application\ICSharpCode.SharpZipLib.dll
+\Windows\assembly\NativeImages_v2.0.50727_32\System.ServiceProcess\
+```
+
+### 6.3 分析判斷
+
+這些模組符合安裝程式或更新程式常見行為，例如：
+
+```text
+查詢系統資訊
+連線下載資料
+解壓縮安裝檔案
+操作或建立服務
+```
+
+其中 `ICSharpCode.SharpZipLib.dll` 顯示它可能有解壓縮功能；WMI 與 ServiceProcess 模組則表示它可能查詢系統狀態或操作服務。
+
+### 6.4 判斷結果
+
+| 項目    | 判斷                   |
+| ----- | -------------------- |
+| 主程式路徑 | WebCompanion 安裝目錄    |
+| 行為特徵  | 安裝 / 更新 / 解壓縮 / 服務操作 |
+| 可疑程度  | 中                    |
+| 主要風險  | PUP 或服務操作行為          |
+
+---
+
+## 7. PID 3856 - WebCompanion.exe 分析
+
+### 7.1 主要發現
+
+```text
+Process: WebCompanion.exe
+Path: \Program Files (x86)\Lavasoft\Web Companion\Application\WebCompanion.exe
+```
+
+此 Process 是 WebCompanion 主程式。
+
+### 7.2 Lavasoft 相關模組
+
+`WebCompanion.exe` 載入多個 Lavasoft 模組：
 
 ```text
 Lavasoft.AppCore.dll
@@ -625,145 +734,108 @@ log4net.dll
 Newtonsoft.Json.dll
 ```
 
-判斷：
+其中比較需要注意的是：
 
 ```text
-WebCompanion.exe 行為符合 WebCompanion 程式本身，但仍與服務操作線索相關。
+Lavasoft.SearchProtect.Business.dll
 ```
+
+此模組名稱顯示它可能與搜尋保護、瀏覽器設定保護或 SearchProtect 類功能有關。
+
+### 7.3 分析判斷
+
+`WebCompanion.exe` 的路徑與 WebCompanion 安裝目錄相符，因此不屬於路徑偽裝型可疑程式。
+
+但它載入 SearchProtect 相關模組，且與 WebCompanionInstaller、Lavasoft.WCAssistant、服務操作線索有關，因此可列為 PUP 類或輔助分析目標。
+
+### 7.4 判斷結果
+
+| 項目               | 判斷                |
+| ---------------- | ----------------- |
+| 主程式路徑            | 合理                |
+| Lavasoft 模組      | 與 WebCompanion 相符 |
+| SearchProtect 模組 | 需要注意              |
+| 可疑程度             | 中低                |
 
 ---
 
-## 5. InLoad / InInit / InMem 判斷
+## 8. 綜合分析
 
-本次有許多模組顯示：
+本次 `LdrModules` 分析中，最重要的發現是兩條線索。
 
-```text
-False False False
-```
-
-這不一定全部代表惡意。
-
-在這次結果中，多數 `False False False` 是：
-
-* Windows 系統 DLL
-* MUI 語言資源檔
-* .NET Native Image
-* AppPatch 相容性 DLL
-* WebCompanion 自身模組
-* MapleStory 遊戲相關 DLL
-
-真正需要注意的是路徑異常的模組，例如：
-
-```text
-\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
-\Users\Rick\AppData\Local\Temp\nst*.tmp
-```
-
----
-
-## 6. 鑑識判斷
-
-本次 `ldrmodules` 補強三個重點：
-
-```text
-Rick And Morty → vmware-tray.exe 的可疑執行鏈成立
-```
-
-```text
-vmware-tray.exe 從 Temp\RarSFX0 執行，且使用 .NET 模組
-```
-
-```text
-LunarMS.exe 雖然像遊戲程式，但載入多個 Temp .tmp 模組，需要補充檢查
-```
-
-因此，後續優先順序應為：
-
-| 優先 |  PID | Process                     | 原因                 |
-| -: | ---: | --------------------------- | ------------------ |
-|  1 | 3820 | `Rick And Morty`            | 主可疑 EXE            |
-|  2 | 3720 | `vmware-tray.exe`           | 可疑子行程              |
-|  3 |  708 | `LunarMS.exe`               | 有多個 Temp `.tmp` 模組 |
-|  4 | 3880 | `WebCompanionInstaller.exe` | 服務操作線索             |
-|  5 | 3856 | `WebCompanion.exe`          | WebCompanion 相關    |
-
----
-
-## 7. 後續建議
-
-優先執行 `malfind`：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3820
-.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3720
-.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 708
-```
-
-針對 `LunarMS.exe` 的 Temp 模組，可再用 `vadinfo` 補充：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.vadinfo.VadInfo --pid 708
-```
-
-針對 WebCompanion 服務操作：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.svcscan.SvcScan
-```
-
----
-
-## 8. 報告用結論
-
-本次使用 `windows.ldrmodules.LdrModules` 分析可疑 Process 的模組載入情況。
-
-結果顯示，`Rick And Morty` 的主程式仍確認為：
-
-```text
-\Torrents\Rick And Morty season 1 download.exe
-```
-
-其子行程 `vmware-tray.exe` 則位於：
-
-```text
-\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
-```
-
-這與前面 `pstree`、`cmdline`、`sessions`、`joblinks` 的結果一致，進一步確認兩者屬於同一條可疑執行鏈。
-
-另外，`LunarMS.exe` 雖然位於 MapleStory 目錄，但載入了多個 `C:\Users\Rick\AppData\Local\Temp\nst*.tmp` 模組，因此仍需進一步用 `malfind` 或 `vadinfo` 檢查是否存在可疑記憶體區段。
-
-WebCompanion 相關行程則載入多個 .NET、WMI、Lavasoft 與壓縮相關模組，符合安裝或更新行為，也與前面觀察到的 `sc.exe` 服務操作線索相符。
-
----
-
-## 9. 簡短結論
-
-本次 `ldrmodules` 最重要的發現：
+第一條是主要可疑執行鏈：
 
 ```text
 Rick And Morty → vmware-tray.exe
 ```
 
-可疑路徑：
+其可疑路徑為：
 
 ```text
 \Torrents\Rick And Morty season 1 download.exe
 \Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
 ```
 
-另外需注意：
+`Rick And Morty` 偽裝成影片下載檔，但實際是 EXE；`vmware-tray.exe` 則偽裝成 VMware 元件，卻從 Temp 自解壓目錄執行。兩者可疑程度最高。
+
+第二條是輔助可疑線索：
 
 ```text
-LunarMS.exe → \Users\Rick\AppData\Local\Temp\nst*.tmp
-WebCompanionInstaller.exe → WMI / .NET / SharpZipLib
+LunarMS.exe → Temp\nst*.tmp
 ```
 
-下一步建議優先分析：
+`LunarMS.exe` 本身像遊戲程式，但載入多個 Temp `.tmp` 模組，仍需要進一步確認。
 
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3820
-.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3720
-.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 708
+WebCompanion 相關行程則較像安裝、更新與服務操作行為。其可疑程度低於 `Rick And Morty` 執行鏈，但仍應注意其 PUP 與 SearchProtect 特徵。
+
+---
+
+## 9. 可疑程度排序
+
+| 排名 |  PID | Process                     | 可疑程度 | 原因                              |
+| -: | ---: | --------------------------- | ---- | ------------------------------- |
+|  1 | 3820 | `Rick And Morty`            | 高    | 偽裝成影片下載的 EXE                    |
+|  2 | 3720 | `vmware-tray.exe`           | 高    | 從 Temp `RarSFX0` 執行，偽裝 VMware   |
+|  3 |  708 | `LunarMS.exe`               | 中    | 載入多個 Temp `.tmp` 模組             |
+|  4 | 3880 | `WebCompanionInstaller.exe` | 中    | 安裝、更新、WMI、服務操作                  |
+|  5 | 3856 | `WebCompanion.exe`          | 中低   | WebCompanion / SearchProtect 相關 |
+
+---
+
+## 10. 結論
+
+`LdrModules` 結果顯示，最主要的可疑目標為 `PID 3820 Rick And Morty` 與 `PID 3720 vmware-tray.exe`。
+
+`Rick And Morty` 的主程式位於：
+
+```text
+\Torrents\Rick And Morty season 1 download.exe
+```
+
+此檔案名稱具有偽裝性，實際上是可執行檔，且與 torrent 下載目錄有關。
+
+`vmware-tray.exe` 位於：
+
+```text
+\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
+```
+
+此路徑不屬於正常 VMware Tools 安裝目錄，且位於使用者 Temp 自解壓目錄，因此高度可疑。
+
+另外，`LunarMS.exe` 載入多個：
+
+```text
+\Users\Rick\AppData\Local\Temp\nst*.tmp
+```
+
+雖然可能與遊戲或安裝暫存有關，但仍需要進一步確認。
+
+整體而言，本次 `LdrModules` 分析支持以下判斷：
+
+```text
+Rick And Morty season 1 download.exe 是主要可疑程式。
+vmware-tray.exe 是其可疑子程式。
+LunarMS.exe 需要補充檢查 Temp 模組。
+WebCompanion 相關行程偏向 PUP / 安裝更新 / 服務操作。
 ```
 
