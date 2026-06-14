@@ -199,7 +199,7 @@ cmd.exe → ipconfig.exe
 
 ---
 
-## . psscan 與 pslist 交叉分析
+## 8. psscan 與 pslist 交叉分析
 
 本次 `psscan` 與前面的 `pslist` 結果大致一致。
 
@@ -220,7 +220,7 @@ ipconfig.exe 是由 cmd.exe 啟動
 
 ---
 
-## 10. 本次 psscan 鑑識重點
+## 9. 本次 psscan 鑑識重點
 
 本次 `psscan` 的重要發現如下：
 
@@ -231,86 +231,3 @@ ipconfig.exe 是由 cmd.exe 啟動
 5. `cmd.exe` 啟動了 `ipconfig.exe`，代表有網路資訊查詢行為。
 6. 多個短時間執行的 Process 在記憶體中留下痕跡。
 7. 未明顯發現只存在於 `psscan` 而不存在於 `pslist` 的隱藏惡意行程。
-
----
-
-## 11. 後續建議分析指令
-
-建議下一步先執行 `cmdline`，確認可疑 Process 的完整命令：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine
-```
-
-針對可疑 PID：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 3820
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 708
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 3880
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 3916
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 3788
-```
-
-建議分析網路連線：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan
-```
-
-建議分析服務：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.svcscan.SvcScan
-```
-
-建議針對可疑行程做 DLL 與注入分析：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.dlllist.DllList --pid 3820
-.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3820
-
-.\vol.exe -f .\OtterCTF.vmem windows.dlllist.DllList --pid 708
-.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 708
-```
-
----
-
-## 12. 報告用結論
-
-本次使用 Volatility 3 的 `windows.psscan.PsScan` Plugin 對 `OtterCTF.vmem` 進行 Process 掃描分析。
-
-分析結果顯示，`psscan` 掃描出的行程大多與前一步 `pslist` 結果一致，因此目前沒有明顯發現大量被隱藏的 Process。不過，`psscan` 額外保留了多個已結束或短時間執行的 Process 線索，例如多個 `sc.exe`、`cmd.exe`、`ipconfig.exe`、`SearchFilterHost` 與 `SearchProtocolHost`。
-
-在可疑行程方面，`Rick And Morty`、`LunarMS.exe`、`BitTorrent.exe`、`WebCompanionIn` 與多個 `sc.exe` 仍是主要關注目標。其中 `WebCompanionIn` 啟動多個 `sc.exe`，可能代表其曾經操作 Windows Service。除此之外，`cmd.exe` 在記憶體擷取時間附近啟動 `ipconfig.exe`，代表當時可能存在網路環境查詢行為。
-
-綜合判斷，本次 `psscan` 沒有明顯發現隱藏行程，但確認了多個短時間執行的可疑活動痕跡。後續應透過 `cmdline`、`netscan`、`svcscan`、`dlllist` 與 `malfind` 進一步交叉分析。
-
----
-
-## 13. 簡短結論
-
-`windows.psscan.PsScan` 成功掃描記憶體中的 Process 物件。
-
-本次結果與 `pslist` 大多一致，沒有明顯 Process hiding 跡象。
-
-但 `psscan` 額外確認了幾個重要線索：
-
-```text
-WebCompanionIn → sc.exe
-cmd.exe → ipconfig.exe
-Rick And Morty
-LunarMS.exe
-BitTorrent.exe
-```
-
-其中 `WebCompanionIn` 啟動多個 `sc.exe`，可能涉及服務操作；`cmd.exe` 啟動 `ipconfig.exe`，可能代表網路環境查詢。
-
-後續建議優先執行：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine
-.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan
-.\vol.exe -f .\OtterCTF.vmem windows.svcscan.SvcScan
-.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind
-```
