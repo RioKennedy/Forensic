@@ -208,6 +208,64 @@ Offset  Proto   LocalAddr       LocalPort       ForeignAddr     ForeignPort     
 
 `PID 2836 BitTorrent.exe` 有大量 TCP 與 UDP 連線紀錄。
 
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan | findstr 2836
+0x7d42ba90 100.0TCPv4   -       0DB scan56.219.196.26   0       CLOSED  2836    BitTorrent.exe  N/A
+0x7d60f010      UDPv4   0.0.0.0 1900    *       0               2836    BitTorrent.exe  2018-08-04 19:27:17.000000
+0x7d62b3f0      UDPv4   192.168.202.131 6771    *       0               2836    BitTorrent.exe  2018-08-04 19:27:22.000000
+0x7d62d690      TCPv4   192.168.202.131 49229   169.1.143.215   8999    CLOSED  2836    BitTorrent.exe   N/A
+0x7d62f4c0      UDPv4   127.0.0.1       62307   *       0               2836    BitTorrent.exe  2018-08-04 19:27:17.000000
+0x7d62f920      UDPv4   192.168.202.131 62306   *       0               2836    BitTorrent.exe  2018-08-04 19:27:17.000000
+0x7d634350      TCPv6   -       0       38db:c41a:80fa:ffff:38db:c41a:80fa:ffff 0       CLOSED  2836     BitTorrent.exe  N/A
+0x7d6e3230      UDPv4   127.0.0.1       6771    *       0               2836    BitTorrent.exe  2018-08-04 19:27:22.000000
+0x7d6f27f0      TCPv4   192.168.202.131 50381   71.198.155.180  34674   CLOSED  2836    BitTorrent.exe   -
+0x7d704010      TCPv4   192.168.202.131 50382   92.251.23.204   6881    CLOSED  2836    BitTorrent.exe   -
+0x7d708cf0      TCPv4   192.168.202.131 50364   91.140.89.116   31847   CLOSED  2836    BitTorrent.exe   -
+0x7d729620      TCPv4   -       50034   142.129.37.27   24578   CLOSED  2836    BitTorrent.exe  -
+0x7d81c890      TCPv4   192.168.202.131 50335   185.154.111.20  60405   CLOSED  2836    BitTorrent.exe   -
+0x7d9cecf0      TCPv4   192.168.202.131 50373   173.239.232.46  2997    CLOSED  2836    BitTorrent.exe   -
+0x7d9d7cf0      TCPv4   192.168.202.131 50371   191.253.122.149 59163   CLOSED  2836    BitTorrent.exe   -
+0x7d9e19e0      TCPv4   0.0.0.0 20830   0.0.0.0 0       LISTENING       2836    BitTorrent.exe  -
+0x7d9e19e0      TCPv6   ::      20830   ::      0       LISTENING       2836    BitTorrent.exe  -
+0x7d9e1c90      TCPv4   0.0.0.0 20830   0.0.0.0 0       LISTENING       2836    BitTorrent.exe  -
+0x7d9e8b50      UDPv4   0.0.0.0 20830   *       0               2836    BitTorrent.exe  2018-08-04 19:27:15.000000
+0x7d9f8cb0      UDPv4   0.0.0.0 20830   *       0               2836    BitTorrent.exe  2018-08-04 19:27:15.000000
+0x7d9f8cb0      UDPv6   ::      20830   *       0               2836    BitTorrent.exe  2018-08-04 19:27:15.000000
+0x7db000a0      TCPv4   -       50091   93.142.197.107  32645   CLOSED  2836    BitTorrent.exe  -
+0x7dc83080      TCPv4   192.168.202.131 50377   179.108.238.10  19761   CLOSED  2836    BitTorrent.exe   -
+0x7dd451f0      TCPv4   192.168.202.131 50321   45.27.208.145   51414   CLOSED  2836    BitTorrent.exe   -
+0x7ddae890      TCPv4   -       50299   212.92.105.227  8999    CLOSED  2836    BitTorrent.exe  -
+0x7e0057d0      TCPv4   192.168.202.131 50353   85.242.139.158  51413   CLOSED  2836    BitTorrent.exe   -
+0x7e0114b0      TCPv4   192.168.202.131 50339   77.65.111.216   8306    CLOSED  2836    BitTorrent.exe   -
+0x7e042cf0      TCPv4   192.168.202.131 50372   83.44.27.35     52103   CLOSED  2836    BitTorrent.exe   -
+0x7e08a010      TCPv4   192.168.202.131 50374   89.46.49.163    20133   CLOSED  2836    BitTorrent.exe   -
+0x7e092010      TCPv4   192.168.202.131 50378   120.29.114.41   13155   CLOSED  2836    BitTorrent.exe   -
+0x7e094b90      TCPv4   192.168.202.131 50365   52.91.1.182     55125   CLOSED  2836    BitTorrent.exe   N/A
+0x7e09ba90      TCPv6   -       0       68f0:181b:80fa:ffff:68f0:181b:80fa:ffff 0       CLOSED  2836     BitTorrent.exe  -
+0x7e0d6180      TCPv4   192.168.202.131 50349   196.250.217.22  32815   CLOSED  2836    BitTorrent.exe   -
+0x7e108100      TCPv4   192.168.202.131 50360   174.0.234.77    31240   CLOSED  2836    BitTorrent.exe   -
+0x7e124910      TCPv4   192.168.202.131 50366   89.78.106.196   51413   CLOSED  2836    BitTorrent.exe   -
+0x7e14dcf0      TCPv4   192.168.202.131 50363   122.62.218.159  11627   CLOSED  2836    BitTorrent.exe   N/A
+0x7e18bcf0      TCPv4   192.168.202.131 50333   191.177.124.34  21011   CLOSED  2836    BitTorrent.exe   -
+0x7e415010      TCPv4   192.168.202.131 50346   89.64.10.176    10589   CLOSED  2836    BitTorrent.exe   -
+0x7e512950      TCPv4   192.168.202.131 50345   77.126.30.221   13905   CLOSED  2836    BitTorrent.exe   -
+0x7e5228d0      TCPv4   192.168.202.131 50075   70.65.116.120   52700   CLOSED  2836    BitTorrent.exe   -
+0x7e52f010      TCPv4   192.168.202.131 50343   86.121.4.189    46392   CLOSED  2836    BitTorrent.exe   -
+0x7e563860      TCPv4   192.168.202.131 50170   103.232.25.44   25384   CLOSED  2836    BitTorrent.exe   -
+0x7e572cf0      TCPv4   192.168.202.131 50125   122.62.218.159  11627   CLOSED  2836    BitTorrent.exe   -
+0x7e5d6cf0      TCPv4   192.168.202.131 50324   54.197.8.177    49420   CLOSED  2836    BitTorrent.exe   -
+0x7e71b010      TCPv4   192.168.202.131 50344   70.27.98.75     6881    CLOSED  2836    BitTorrent.exe   -
+0x7e71d010      TCPv4   192.168.202.131 50351   99.251.199.160  1045    CLOSED  2836    BitTorrent.exe   -
+0x7e74b010      TCPv4   192.168.202.131 50385   209.236.6.89    56500   CLOSED  2836    BitTorrent.exe   -
+0x7e7ae380      TCPv4   192.168.202.131 50361   5.34.21.181     8999    CLOSED  2836    BitTorrent.exe   -
+0x7e7b0380      TCPv6   -       0       4847:d418:80fa:ffff:4847:d418:80fa:ffff 0       CLOSED  2836     BitTorrent.exe  N/A
+0x7e7b9010      TCPv4   192.168.202.131 50334   188.129.94.129  25128   CLOSED  2836    BitTorrent.exe   N/A
+0x7e94b010      TCPv4   192.168.202.131 50356   77.126.30.221   13905   CLOSED  2836    BitTorrent.exe   -
+0x7e9ad840      TCPv4   192.168.202.131 50380   84.52.144.29    56299   CLOSED  2836    BitTorrent.exe   -
+0x7e9bacf0      TCPv4   192.168.202.131 50350   77.253.242.0    5000    CLOSED  2836    BitTorrent.exe   -
+0x7eab4cf0      TCPv4   -       0       56.219.196.26   0       CLOSED  2836    BitTorrent.exe  N/A
+```
+
 常見遠端 Port 包含：
 
 ```text
