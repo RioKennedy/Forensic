@@ -315,6 +315,22 @@ D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.ne
 
 `PID 3880 WebCompanionIn` 有多筆 HTTP 連線：
 
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan | findstr 3880
+0x7db132e0 100.0TCPv4   192.168.202.131n50280fin72.55.154.81    80      CLOSED  3880    WebCompanionIn   N/A
+0x7db83b90      UDPv4   0.0.0.0 0       *       0               3880    WebCompanionIn  2018-08-04 19:33:30.000000
+0x7db83b90      UDPv6   ::      0       *       0               3880    WebCompanionIn  2018-08-04 19:33:30.000000
+0x7e0a8b90      TCPv4   192.168.202.131 50341   72.55.154.81    80      CLOSED  3880    WebCompanionIn   N/A
+0x7e12c1c0      UDPv4   0.0.0.0 0       *       0               3880    WebCompanionIn  2018-08-04 19:33:27.000000
+0x7e163a40      UDPv4   0.0.0.0 0       *       0               3880    WebCompanionIn  2018-08-04 19:33:27.000000
+0x7e163a40      UDPv6   ::      0       *       0               3880    WebCompanionIn  2018-08-04 19:33:27.000000
+0x7e4202d0      TCPv4   192.168.202.131 50217   104.18.21.226   80      CLOSED  3880    WebCompanionIn   N/A
+0x7e45f110      TCPv4   192.168.202.131 50211   104.18.20.226   80      CLOSED  3880    WebCompanionIn   N/A
+0x7e4cc910      TCPv4   192.168.202.131 50228   104.18.20.226   80      CLOSED  3880    WebCompanionIn   N/A
+0x7e78b7f0      TCPv4   192.168.202.131 50238   72.55.154.82    80      CLOSED  3880    WebCompanionIn   N/A
+0x7e7a3960      UDPv4   0.0.0.0 0       *       0               3880    WebCompanionIn  2018-08-04 19:33:30.000000
+```
+
 ```text
 192.168.202.131:50280 → 72.55.154.81:80
 192.168.202.131:50341 → 72.55.154.81:80
