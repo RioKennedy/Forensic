@@ -395,6 +395,23 @@ D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.ne
 
 `PID 4076 chrome.exe` 有多筆 UDP 連線，例如：
 
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan | findstr 4076
+0x7d6424c0 100.0UDPv4   0.0.0.0 50762can*ing fin0shed           4076    chrome.exe      2018-08-04 19:33:37.000000
+0x7d787010      UDPv4   0.0.0.0 65452   *       0               4076    chrome.exe      2018-08-04 19:33:42.000000
+0x7dbc3010      TCPv6   -       0       4847:d418:80fa:ffff:4847:d418:80fa:ffff 0       CLOSED  4076     chrome.exe      N/A
+0x7dc2dc30      UDPv4   0.0.0.0 50879   *       0               4076    chrome.exe      2018-08-04 19:30:41.000000
+0x7dc2dc30      UDPv6   ::      50879   *       0               4076    chrome.exe      2018-08-04 19:30:41.000000
+0x7e7469c0      UDPv4   0.0.0.0 50878   *       0               4076    chrome.exe      2018-08-04 19:30:39.000000
+0x7e7469c0      UDPv6   ::      50878   *       0               4076    chrome.exe      2018-08-04 19:30:39.000000
+0x7e77cb00      UDPv4   0.0.0.0 50748   *       0               4076    chrome.exe      2018-08-04 19:30:07.000000
+0x7e77cb00      UDPv6   ::      50748   *       0               4076    chrome.exe      2018-08-04 19:30:07.000000
+0x7e79f3f0      UDPv4   0.0.0.0 5353    *       0               4076    chrome.exe      2018-08-04 19:29:35.000000
+0x7e7a0ec0      UDPv4   0.0.0.0 5353    *       0               4076    chrome.exe      2018-08-04 19:29:35.000000
+0x7e7a0ec0      UDPv6   ::      5353    *       0               4076    chrome.exe      2018-08-04 19:29:35.000000
+
+```
+
 ```text
 0.0.0.0:50762
 0.0.0.0:65452
