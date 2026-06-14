@@ -1,12 +1,52 @@
+# 測試內容
+- vol.exe -f .\OtterCTF.vmem windows.mftscan.MftScan
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.mftscan.MFTScan
+Volatility 3 Framework 2.5.0
+Progress:  100.00               PDB scanning finished
+Offset  Record Type     Record Number   Link Count      MFT Type        Permissions     Attribute Type   Created Modified        Updated Accessed        Filename
+
+0xf88008155050  FILE    38724   2       File    N/A     STANDARD_INFORMATION    2009-07-13 23:42:38.000000       2009-07-14 01:16:20.000000      2018-06-02 20:20:29.000000      2009-07-13 23:42:38.000000       N/A
+* 0xf880081550b0        FILE    38724   2       File    Archive FILE_NAME       2018-06-02 20:20:26.000000       2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000       wshext.dll
+* 0xf88008155120        FILE    38724   2       File    Archive FILE_NAME       2018-06-02 20:20:26.000000       2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000       wshext.dll
+0xf88008155450  FILE    38725   2       File    N/A     STANDARD_INFORMATION    2009-07-13 23:12:08.000000       2009-07-14 01:16:20.000000      2018-06-02 20:20:29.000000      2009-07-13 23:12:08.000000       N/A
+* 0xf880081554b0        FILE    38725   2       File    Archive FILE_NAME       2018-06-02 20:20:26.000000       2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000       wship6.dll
+* 0xf88008155520        FILE    38725   2       File    Archive FILE_NAME       2018-06-02 20:20:26.000000       2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000       wship6.dll
+0xf88008155850  FILE    38726   2       File    N/A     STANDARD_INFORMATION    2009-07-14 02:59:34.000000       2009-07-14 02:58:55.000000      2018-06-02 20:20:29.000000      2009-07-14 02:58:55.000000       N/A
+* 0xf880081558b0        FILE    38726   2       File    Archive FILE_NAME       2018-06-02 20:20:26.000000       2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000       x86_microsoft-windows-winsock-helper-tcpip_31bf3856ad364e35_6.1.7600.16385_none_cb895be592db1acb_wship6.dll_db4127c3
+* 0xf880081559f8        FILE    38726   2       File    Archive FILE_NAME       2018-06-02 20:20:26.000000       2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000       X845BB~1.DLL
+0xf88008155c50  FILE    38727   2       File    N/A     STANDARD_INFORMATION    2010-11-21 03:24:33.000000       2010-11-21 03:24:33.000000      2018-06-02 20:20:29.000000      2010-11-21 03:24:33.000000       N/A
+* 0xf88008155cb0        FILE    38727   2       File    Archive FILE_NAME       2018-06-02 20:20:26.000000       2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000       wshirda.dll
+* 0xf88008155d20        FILE    38727   2       File    Archive FILE_NAME       2018-06-02 20:20:26.000000       2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000      2018-06-02 20:20:26.000000       wshirda.dll
+0xf88008159050  FILE    39880   3       File    N/A     STANDARD_INFORMATION    2010-11-21 07:06:17.000000       2010-11-21 07:06:17.000000      2018-06-02 20:20:33.000000      2010-11-21 07:06:17.000000       N/A
+* 0xf880081590b0        FILE    39880   3       File    Archive FILE_NAME       2018-06-02 20:20:33.000000       2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000       TYPEPE~1.MUI
+* 0xf88008159128        FILE    39880   3       File    Archive FILE_NAME       2018-06-02 20:20:33.000000       2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000       typeperf.exe.mui
+* 0xf880081591a8        FILE    39880   3       File    Archive FILE_NAME       2018-06-02 20:20:33.000000       2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000       typeperf.exe.mui
+0xf88008159450  FILE    39881   3       File    N/A     STANDARD_INFORMATION    2010-11-21 07:06:20.000000       2010-11-21 07:06:20.000000      2018-06-02 20:20:33.000000      2010-11-21 07:06:20.000000       N/A
+* 0xf880081594b0        FILE    39881   3       File    Archive FILE_NAME       2018-06-02 20:20:33.000000       2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000       tzres.dll.mui
+* 0xf88008159528        FILE    39881   3       File    Archive FILE_NAME       2018-06-02 20:20:33.000000       2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000       TZRESD~1.MUI
+* 0xf880081595a0        FILE    39881   3       File    Archive FILE_NAME       2018-06-02 20:20:33.000000       2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000       tzres.dll.mui
+0xf88008159850  FILE    39882   3       File    N/A     STANDARD_INFORMATION    2010-11-21 07:06:20.000000       2010-11-21 07:06:20.000000      2018-06-02 20:20:33.000000      2010-11-21 07:06:20.000000       N/A
+* 0xf880081598b0        FILE    39882   3       File    Archive FILE_NAME       2018-06-02 20:20:33.000000       2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000       TZUTIL~1.MUI
+* 0xf88008159928        FILE    39882   3       File    Archive FILE_NAME       2018-06-02 20:20:33.000000       2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000       tzutil.exe.mui
+* 0xf880081599a0        FILE    39882   3       File    Archive FILE_NAME       2018-06-02 20:20:33.000000       2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000       tzutil.exe.mui
+0xf88008159c50  FILE    39883   3       File    N/A     STANDARD_INFORMATION    2010-11-21 07:06:18.000000       2010-11-21 07:06:18.000000      2018-06-02 20:20:33.000000      2010-11-21 07:06:19.000000       N/A
+* 0xf88008159cb0        FILE    39883   3       File    Archive FILE_NAME       2018-06-02 20:20:33.000000       2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000       ubpm.dll.mui
+* 0xf88008159d28        FILE    39883   3       File    Archive FILE_NAME       2018-06-02 20:20:33.000000       2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000       UBPMDL~1.MUI
+* 0xf88008159da0        FILE    39883   3       File    Archive FILE_NAME       2018-06-02 20:20:33.000000       2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000       ubpm.dll.muiTraceback
+...
+....
+.....
+```
 
 
-
+- vol.exe -f .\OtterCTF.vmem windows.mftscan.MftScan | findstr "Flag READ_IT"
 ```
 D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.mftscan.MFTScan | findstr "Flag READ_IT"
 * 0xf98001ca1d280       FILE    62343can2ing finFiled   Archive FILE_NAME       2018-08-04 19:34:11.000000       2018-08-04 19:34:11.000000      2018-08-04 19:34:11.000000      2018-08-04 19:34:11.000000       Flag.txt.WINDOWS.lnk
 ```
 
-
+- vol.exe -f .\OtterCTF.vmem windows.mftscan.MftScan | findstr "Rick Morty download exe"
 ```
 D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.mftscan.MFTScan | findstr "Rick Morty download exe"
 * 0xf880081591280       FILE    39880can3ing finFiled   Archive FILE_NAME       2018-06-02 20:20:33.000000       2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000      2018-06-02 20:20:33.000000       typeperf.exe.mui
