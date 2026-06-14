@@ -182,6 +182,10 @@ D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.cm
 ```text
 C:\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
 ```
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine | findstr vmware-tray
+3720ressvmware-tray.ex  "C:\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe"
+```
 
 `vmware-tray.exe` 從 `Temp\RarSFX0` 執行，這點可疑。
 
