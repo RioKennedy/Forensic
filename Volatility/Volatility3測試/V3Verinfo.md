@@ -80,23 +80,31 @@ D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.ve
 
 ## 1. Plugin 功能說明
 
-`windows.verinfo.VerInfo` 用來查看記憶體中 EXE / DLL 的版本資訊，例如：
+`windows.verinfo.VerInfo` 用來查看記憶體中 EXE / DLL 模組的版本資訊。
 
-* File Description
-* File Version
-* Product Name
-* Company Name
-* Product Version
+本次欄位如下：
 
-此 Plugin 可用來判斷檔案是否具有正常軟體資訊，或是否有偽裝成正常程式的情況。
+| 欄位        | 說明             |
+| --------- | -------------- |
+| `PID`     | 行程編號           |
+| `Process` | 行程名稱           |
+| `Base`    | 模組載入到記憶體中的基底位址 |
+| `Name`    | 模組名稱           |
+| `Major`   | 主要版本號          |
+| `Minor`   | 次要版本號          |
+| `Product` | 產品版本號          |
+| `Build`   | Build 編號       |
+
+此 Plugin 可以用來判斷可疑程式是否有正常的版本資訊。
+如果檔案偽裝成正常軟體，但版本資訊不完整或不合理，就需要特別注意。
 
 ---
 
 ## 2. 執行方式
 
-`VerInfo` 不支援 `--pid`，因此本次先執行完整結果，再用 `findstr` 篩選指定 PID：
+`VerInfo` 不支援 `--pid`，因此本次使用 `findstr` 篩選指定 PID：
 
-```bash
+```bash id="69v2v6"
 .\vol.exe -f .\OtterCTF.vmem windows.verinfo.VerInfo | findstr 3820
 .\vol.exe -f .\OtterCTF.vmem windows.verinfo.VerInfo | findstr 3720
 ```
@@ -105,83 +113,114 @@ D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.ve
 
 ## 3. PID 3820 - Rick And Morty 分析
 
-### 結果重點
+### 3.1 結果
 
-```text
-3820 Rick And Morty 0x400000 Rick And Morty season 1 download.exe - - - -
+```text id="z9w1br"
+PID: 3820
+Process: Rick And Morty
+Base: 0x400000
+Name: Rick And Morty season 1 download.exe
+Major: -
+Minor: -
+Product: -
+Build: -
 ```
 
-### 分析
+### 3.2 分析
 
-`Rick And Morty season 1 download.exe` 沒有明顯版本資訊，結果多數欄位顯示為 `-`。
+`Rick And Morty season 1 download.exe` 沒有版本資訊，`Major`、`Minor`、`Product`、`Build` 皆為 `-`。
 
-這代表該檔案沒有正常軟體常見的公司名稱、產品名稱或版本描述。
+這代表該檔案沒有正常軟體常見的版本標示。
 
-再加上檔名偽裝成影片下載，且位於 Torrent 下載目錄，因此可疑程度高。
+此檔案名稱看起來像影片下載，但實際上是 `.exe`，因此具有偽裝特徵。
 
-### 判斷
+### 3.3 判斷
 
-```text
-PID 3820 Rick And Morty 沒有正常版本資訊，支持其為可疑執行檔。
+```text id="avzdrc"
+PID 3820 Rick And Morty 沒有版本資訊，且檔名偽裝成影片下載，因此具有高度可疑性。
 ```
 
 ---
 
 ## 4. PID 3720 - vmware-tray.exe 分析
 
-### 結果重點
+### 4.1 結果
 
-```text
-3720 vmware-tray.ex 0xec0000 vmware-tray.exe 1 0 0 0
+```text id="7s0544"
+PID: 3720
+Process: vmware-tray.ex
+Base: 0xec0000
+Name: vmware-tray.exe
+Major: 1
+Minor: 0
+Product: 0
+Build: 0
 ```
 
-### 分析
+### 4.2 分析
 
-`vmware-tray.exe` 雖然有出現版本數字 `1.0.0.0`，但沒有看到 VMware 相關的公司名稱、產品名稱或完整描述。
+`vmware-tray.exe` 有版本號：
 
-如果是正常 VMware Tools 元件，通常應該會有 VMware 相關版本資訊。
+```text id="mggmih"
+1.0.0.0
+```
 
-但本次此檔案的路徑是：
+但是這個版本資訊非常簡單，只有基本數字，沒有顯示出明確的 VMware 產品資訊。
 
-```text
+如果是真正 VMware Tools 元件，通常應該會有較完整的版本資訊。
+再加上前面已確認它的路徑位於：
+
+```text id="dqfbd3"
 \Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
 ```
 
-此路徑不屬於正常 VMware Tools 安裝位置，因此即使有簡單版本號，也不能視為正常 VMware 程式。
+此路徑不是正常 VMware Tools 安裝路徑，因此仍然高度可疑。
 
-### 判斷
+### 4.3 判斷
 
-```text
-PID 3720 vmware-tray.exe 缺少正常 VMware 版本資訊，且位於 Temp\RarSFX0，具有偽裝特徵。
+```text id="dlbnj5"
+PID 3720 vmware-tray.exe 雖然有版本號 1.0.0.0，但資訊過於簡單，且路徑位於 Temp\RarSFX0，因此不像正常 VMware 元件。
 ```
 
 ---
 
-## 5. 綜合判斷
+## 5. 比較表
 
-本次 `VerInfo` 沒有發現這兩個可疑檔案具有可信的正常軟體版本資訊。
+|  PID | Process          | Name                                   | Major | Minor | Product | Build | 判斷             |
+| ---: | ---------------- | -------------------------------------- | ----: | ----: | ------: | ----: | -------------- |
+| 3820 | `Rick And Morty` | `Rick And Morty season 1 download.exe` |   `-` |   `-` |     `-` |   `-` | 無版本資訊，高度可疑     |
+| 3720 | `vmware-tray.ex` | `vmware-tray.exe`                      |   `1` |   `0` |     `0` |   `0` | 版本資訊過於簡單，且路徑可疑 |
 
-|  PID | Process           | VerInfo 判斷                |
-| ---: | ----------------- | ------------------------- |
-| 3820 | `Rick And Morty`  | 無正常版本資訊，高度可疑              |
-| 3720 | `vmware-tray.exe` | 僅有簡單版本號，缺少 VMware 資訊，高度可疑 |
+---
 
-綜合前面分析，可判斷：
+## 6. 綜合判斷
 
-```text
+本次 `VerInfo` 分析顯示：
+
+```text id="er3c7i"
+Rick And Morty season 1 download.exe 沒有版本資訊。
+vmware-tray.exe 只有簡單版本號 1.0.0.0。
+```
+
+這兩個結果都不符合正常可信軟體應有的完整版本資訊。
+
+綜合前面已知的路徑與行程關係，可判斷：
+
+```text id="kakutp"
 Rick And Morty season 1 download.exe
 ↓
 Temp\RarSFX0\vmware-tray.exe
 ```
 
-這兩個檔案都缺少可信的版本資訊，因此更支持它們屬於同一條可疑執行鏈。
+這兩個檔案仍然屬於高度可疑執行鏈。
 
 ---
 
-## 6. 結論
+## 7. 結論
 
-`windows.verinfo.VerInfo` 結果顯示，`Rick And Morty season 1 download.exe` 沒有正常版本資訊，而 `vmware-tray.exe` 雖然有版本號 `1.0.0.0`，但缺少 VMware 公司名稱或產品資訊。
+`windows.verinfo.VerInfo` 結果顯示，`PID 3820 Rick And Morty` 的主程式沒有任何版本資訊，代表它不像一般正常軟體。
 
-因此，`vmware-tray.exe` 不像正常 VMware Tools 元件，而比較像是假冒 VMware 名稱的可疑程式。
+`PID 3720 vmware-tray.exe` 雖然有版本號 `1.0.0.0`，但版本資訊過於簡單，而且沒有顯示 VMware 相關產品特徵。再加上它位於 `Temp\RarSFX0` 目錄，因此不像正常 VMware Tools 元件。
 
-本次 `VerInfo` 結果補強前面判斷：`Rick And Morty` 是主要可疑執行檔，`vmware-tray.exe` 是其釋放或啟動的可疑子程式。
+因此，本次 `VerInfo` 結果支持前面判斷：`Rick And Morty` 是主要可疑執行檔，而 `vmware-tray.exe` 很可能是其釋放或啟動的可疑子程式。
+
