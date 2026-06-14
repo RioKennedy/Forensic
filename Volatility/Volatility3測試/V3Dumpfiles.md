@@ -192,29 +192,3 @@ ImageSectionObject      0x7daad840      vmware-tray.exe file.0x7daad840.0xfa801b
 ```
 
 這兩個檔案可進一步進行 hash、字串分析與靜態分析。
-
----
-
-## 9. 結論
-
-本次 `DumpFiles` 分析成功從記憶體中還原關鍵檔案。
-
-`READ_IT.txt` 與 `Flag.txt.WINDOWS.lnk` 可用來確認使用者操作與 Flag 線索。
-
-`Rick And Morty season 1 download.exe` 是主要可疑執行檔，可能來自 Torrent 下載。
-
-`vmware-tray.exe` 則是由可疑程式釋放或啟動的後續檔案，因為其執行位置位於 `Temp\RarSFX0`，並非正常 VMware 安裝路徑，因此具有高度可疑性。
-
-本次結果可支持以下攻擊鏈：
-
-```text
-BitTorrent 下載活動
-↓
-\Torrents\Rick And Morty season 1 download.exe
-↓
-執行可疑程式
-↓
-產生或啟動 Temp\RarSFX0\vmware-tray.exe
-↓
-留下 READ_IT.txt 與 Flag 相關痕跡
-```
