@@ -456,30 +456,3 @@ Chrome 出現 UDP 與瀏覽器相關連線屬於常見行為，目前不是主�
 | 3496 | `Lavasoft.WCAss` | HTTP 80 連線         | WebCompanion 服務行為 |
 |  708 | `LunarMS.exe`    | 對外 TCP 連線          | 中等注意              |
 | 4076 | `chrome.exe`     | 一般瀏覽器 UDP 連線       | 較正常               |
-
----
-
-## 10. 結論
-
-`windows.netscan.NetScan` 結果顯示，系統中最明顯的網路活動來自 `BitTorrent.exe`。
-
-`BitTorrent.exe` 有大量外部 IP 連線，並且監聽 `20830` Port，符合 P2P 下載軟體行為。這與前面發現的可疑檔案：
-
-```text
-\Torrents\Rick And Morty season 1 download.exe
-```
-
-具有關聯性，表示該可疑 EXE 可能來自 Torrent 下載活動。
-
-另外，`WebCompanionInstaller.exe`、`WebCompanion.exe` 與 `Lavasoft.WCAss` 有多筆 HTTP Port 80 連線，符合安裝、更新或下載資料行為。
-
-`LunarMS.exe` 也有對外連線紀錄，但目前可疑程度低於 BitTorrent 與 `Rick And Morty` 執行鏈。
-
-整體判斷，本次 `netscan` 支持以下重點：
-
-```text
-BitTorrent.exe 存在大量 P2P 網路活動。
-可疑檔案 Rick And Morty season 1 download.exe 可能與 Torrent 下載活動有關。
-WebCompanion 相關 Process 有 HTTP 更新 / 下載行為。
-目前主要可疑線索仍集中在 Rick And Morty 與 vmware-tray.exe 執行鏈。
-```
