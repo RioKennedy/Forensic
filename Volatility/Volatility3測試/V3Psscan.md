@@ -173,189 +173,29 @@ PID     PPID    ImageFileName   Offset(V)       Threads Handles SessionId       
 
 ## 7. 重要可疑行程分析
 
-### 7.1 Rick And Morty
+本次 `psscan` 中較需要注意的行程如下：
+
+| Process          |                PID | 重點                        |
+| ---------------- | -----------------: | ------------------------- |
+| `Rick And Morty` |               3820 | 非系統行程，名稱可疑，仍在執行           |
+| `LunarMS.exe`    |                708 | 非 Windows 預設行程，需確認用途      |
+| `BitTorrent.exe` |               2836 | P2P 下載軟體，可能與可疑檔案下載有關      |
+| `WebCompanionIn` |               3880 | 啟動多個 `sc.exe`，可能涉及服務操作    |
+| `sc.exe`         | 3208、452、3504、2028 | 短時間執行，需確認是否建立或修改服務        |
+| `cmd.exe`        |               3916 | 短時間執行，接近記憶體擷取時間           |
+| `ipconfig.exe`   |               3788 | 由 `cmd.exe` 啟動，可能用於查詢網路資訊 |
+
+其中最重要的線索是：
 
 ```text
-PID: 3820
-PPID: 2728
-Process: Rick And Morty
-Wow64: True
-CreateTime: 2018-08-04 19:32:55
-ExitTime: N/A
+WebCompanionIn → sc.exe
+cmd.exe → ipconfig.exe
 ```
 
-`Rick And Morty` 是本次結果中非常重要的可疑行程。
+`WebCompanionIn` 啟動多個 `sc.exe`，代表可能有服務建立、修改或刪除行為。
+`cmd.exe` 啟動 `ipconfig.exe`，代表當時可能有查詢網路設定的行為。
 
-可疑原因：
-
-1. 不是 Windows 預設系統行程。
-2. 行程名稱不像正式軟體名稱。
-3. 由 `explorer.exe` 啟動，代表可能是使用者手動執行。
-4. `Wow64=True`，代表它是 32-bit 程式。
-5. 在 `pslist` 與 `psscan` 中都存在，代表擷取記憶體時仍在執行。
-
-此行程應列為優先分析目標。
-
-建議後續指令：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 3820
-.\vol.exe -f .\OtterCTF.vmem windows.dlllist.DllList --pid 3820
-.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3820
-```
-
----
-
-### 7.2 LunarMS.exe
-
-```text
-PID: 708
-PPID: 2728
-Process: LunarMS.exe
-Wow64: True
-CreateTime: 2018-08-04 19:27:39
-ExitTime: N/A
-```
-
-`LunarMS.exe` 也是本次需要注意的行程。
-
-可疑原因：
-
-1. 不是 Windows 預設系統行程。
-2. 由 `explorer.exe` 啟動。
-3. 是 32-bit 程式。
-4. 在 `pslist` 和 `psscan` 中都存在，代表擷取時仍在執行。
-
-雖然它可能是遊戲或一般應用程式，但在記憶體鑑識中仍需要確認它的路徑、參數、DLL 與是否有程式碼注入。
-
-建議後續指令：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 708
-.\vol.exe -f .\OtterCTF.vmem windows.dlllist.DllList --pid 708
-.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 708
-```
-
----
-
-### 7.3 BitTorrent.exe 與 bittorrentie.e
-
-```text
-PID: 2836
-Process: BitTorrent.exe
-PPID: 2728
-
-PID: 2308
-Process: bittorrentie.e
-PPID: 2836
-
-PID: 2624
-Process: bittorrentie.e
-PPID: 2836
-```
-
-`BitTorrent.exe` 是 P2P 下載軟體，子行程為 `bittorrentie.e`。
-
-它本身不一定是惡意程式，但在鑑識分析中需要注意，因為 P2P 軟體常與未知檔案下載有關。
-
-需要進一步確認：
-
-* 是否下載過可疑檔案
-* 是否有異常網路連線
-* 是否與後續可疑行程有關
-
-建議後續指令：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 2836
-.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan
-```
-
----
-
-### 7.4 WebCompanionIn 與 sc.exe
-
-```text
-PID: 3880
-Process: WebCompanionIn
-CreateTime: 2018-08-04 19:33:07
-
-PID: 3208
-Process: sc.exe
-PPID: 3880
-ExitTime: 2018-08-04 19:33:48
-
-PID: 452
-Process: sc.exe
-PPID: 3880
-ExitTime: 2018-08-04 19:33:48
-
-PID: 3504
-Process: sc.exe
-PPID: 3880
-ExitTime: 2018-08-04 19:33:48
-
-PID: 2028
-Process: sc.exe
-PPID: 3880
-ExitTime: 2018-08-04 19:34:03
-```
-
-這是本次 `psscan` 分析中非常重要的線索。
-
-`sc.exe` 是 Windows 服務控制工具，可以用來：
-
-* 建立服務
-* 啟動服務
-* 停止服務
-* 刪除服務
-* 修改服務設定
-
-本次多個 `sc.exe` 都是由 `WebCompanionIn` 啟動，而且都在短時間內結束。
-
-這代表 `WebCompanionIn` 可能曾經操作 Windows Service。
-
-是否為正常安裝行為或可疑服務操作，需要透過 `cmdline` 與 `svcscan` 確認。
-
-建議後續指令：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine
-.\vol.exe -f .\OtterCTF.vmem windows.svcscan.SvcScan
-```
-
----
-
-### 7.5 cmd.exe 與 ipconfig.exe
-
-```text
-PID: 3916
-Process: cmd.exe
-PPID: 1428
-CreateTime: 2018-08-04 19:34:22
-ExitTime: 2018-08-04 19:34:22
-
-PID: 3788
-Process: ipconfig.exe
-PPID: 3916
-CreateTime: 2018-08-04 19:34:22
-ExitTime: 2018-08-04 19:34:22
-```
-
-`psscan` 額外清楚顯示：`ipconfig.exe` 是由 `cmd.exe` 啟動。
-
-這代表在記憶體擷取時間附近，有人或某個程式執行了類似網路設定查詢的命令。
-
-`ipconfig.exe` 通常用於查看本機 IP、DNS、Gateway 等網路資訊。
-
-這個行為不一定惡意，但在 CTF 或事件調查中非常重要，因為它可能代表：
-
-1. 使用者正在查看網路設定。
-2. 惡意程式正在偵察系統網路環境。
-3. 攻擊者正在確認主機 IP 與網路狀態。
-4. VMware Tools 或其他程式觸發了命令列操作。
-
-此線索需要透過 `cmdline` 確認完整命令。
+因此，後續應優先使用 `cmdline` 確認這些行程的完整執行命令。
 
 ---
 
