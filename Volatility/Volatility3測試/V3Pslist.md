@@ -174,6 +174,16 @@ CreateTime: 2018-08-04 19:27:04
 | 3820 | Rick And Morty |
 
 這些行程屬於使用者層活動，需要進一步判斷是否正常。
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.pslist.PsList | findstr 2728
+2728ress269600.0explorer.exe    0xfa801b27e060in33hed   854     1       False   2018-08-04 19:27:04.000000      N/A    Disabled
+2804    2728    vmtoolsd.exe    0xfa801b1cdb30  6       190     1       False   2018-08-04 19:27:06.000000      N/A    Disabled
+2836    2728    BitTorrent.exe  0xfa801b290b30  24      471     1       True    2018-08-04 19:27:07.000000      N/A    Disabled
+2844    2728    WebCompanion.e  0xfa801b2f02e0  0       -       1       False   2018-08-04 19:27:07.000000      2018-08-04 19:33:33.000000      Disabled
+708     2728    LunarMS.exe     0xfa801b5cb740  18      346     1       True    2018-08-04 19:27:39.000000      N/A    Disabled
+4076    2728    chrome.exe      0xfa801a4e3870  44      1160    1       False   2018-08-04 19:29:30.000000      N/A    Disabled
+3820    2728    Rick And Morty  0xfa801b486b30  4       185     1       True    2018-08-04 19:32:55.000000      N/A    Disabled
+```
 
 ---
 
