@@ -120,9 +120,52 @@ Pid     Process Base    InLoad  InInit  InMem   MappedPath
 
 # windows.ldrmodules.LdrModules 分析
 
-## 1. 分析目標
+## 1. Plugin 功能說明
 
-本次只針對以下兩個可疑 Process 進行 `LdrModules` 分析：
+`windows.ldrmodules.LdrModules` 是 Volatility 3 用來檢查 Process 載入模組狀態的 Plugin。
+
+它會比對 Process 中的模組是否存在於 Windows 的 Loader List 中，主要用來觀察：
+
+* Process 載入了哪些 EXE / DLL 模組
+* 模組路徑是否正常
+* 是否有從可疑路徑載入模組
+* 是否有模組不在正常 Loader List 中
+* 是否可能存在隱藏模組或可疑載入行為
+
+本次使用此 Plugin 的目的，是確認 `Rick And Morty` 與 `vmware-tray.exe` 的模組路徑是否合理，以及兩者是否存在可疑載入特徵。
+
+---
+
+## 2. 欄位說明
+
+| 欄位           | 說明                              |
+| ------------ | ------------------------------- |
+| `Pid`        | Process ID，行程編號                 |
+| `Process`    | Process 名稱                      |
+| `Base`       | 模組載入到記憶體中的基底位址                  |
+| `InLoad`     | 是否存在於 Load Order List           |
+| `InInit`     | 是否存在於 Initialization Order List |
+| `InMem`      | 是否存在於 Memory Order List         |
+| `MappedPath` | 模組對應的檔案路徑                       |
+
+其中 `InLoad`、`InInit`、`InMem` 是用來判斷模組是否存在於不同的 Loader List 中。
+
+如果某個模組顯示：
+
+```text id="6o9wox"
+False False False
+```
+
+不一定代表惡意，還要看它的檔案路徑與 Process 行為。
+例如 Windows 系統 DLL、語言資源檔、.NET 模組，有時也可能顯示 `False`。
+
+本次真正需要注意的是路徑是否異常。
+
+---
+
+## 3. 分析目標
+
+本次只分析以下兩個可疑 Process：
 
 |  PID | Process           | 路徑                                                       |
 | ---: | ----------------- | -------------------------------------------------------- |
@@ -133,11 +176,11 @@ Pid     Process Base    InLoad  InInit  InMem   MappedPath
 
 ---
 
-## 2. PID 3820 - Rick And Morty 分析
+## 4. PID 3820 - Rick And Morty 分析
 
-### 2.1 主要發現
+### 4.1 主要發現
 
-```text
+```text id="kndkqk"
 PID: 3820
 Process: Rick And Morty
 MappedPath: \Torrents\Rick And Morty season 1 download.exe
@@ -147,11 +190,13 @@ MappedPath: \Torrents\Rick And Morty season 1 download.exe
 
 這是本次分析中最明顯的可疑點。
 
-### 2.2 模組載入狀況
+---
+
+### 4.2 模組載入狀況
 
 此 Process 載入的模組大多是 Windows 32-bit 系統模組，例如：
 
-```text
+```text id="jk6o8z"
 \Windows\SysWOW64\kernel32.dll
 \Windows\SysWOW64\user32.dll
 \Windows\SysWOW64\shell32.dll
@@ -164,49 +209,55 @@ MappedPath: \Torrents\Rick And Morty season 1 download.exe
 \Windows\System32\ntdll.dll
 ```
 
-其中 `wow64.dll`、`wow64cpu.dll`、`wow64win.dll` 表示此程式是 32-bit 程式，正在 64-bit Windows 環境中執行。
+其中 `wow64.dll`、`wow64cpu.dll`、`wow64win.dll` 代表此程式是 32-bit 程式，正在 64-bit Windows 環境中執行。
 
-另外，`wininet.dll`、`urlmon.dll`、`crypt32.dll` 代表程式可能具備網路連線、URL 存取或憑證處理能力。不過這些 DLL 本身不代表惡意，仍需搭配其他 Plugin 判斷。
+另外，`wininet.dll`、`urlmon.dll`、`crypt32.dll` 代表程式可能具備網路連線、URL 存取或憑證處理能力。不過這些 DLL 本身不能直接判斷惡意，需要搭配其他 Plugin 分析。
 
-### 2.3 InLoad / InInit / InMem 判斷
+---
+
+### 4.3 Loader List 狀態
 
 主程式顯示：
 
-```text
+```text id="20s83b"
 InLoad: True
 InInit: False
 InMem: True
 ```
 
-代表此主模組存在於主要 Loader List 與記憶體中。`InInit` 為 `False` 不一定代表惡意，因為不同模組在初始化清單中的狀態可能不同。
+這代表主程式存在於主要 Loader List 與記憶體中。
 
-本次重點不是 `InInit=False`，而是主程式路徑與檔名高度可疑。
+`InInit` 為 `False` 不一定代表惡意，因為不是所有模組都一定會出現在 Initialization Order List 中。
 
-### 2.4 鑑識判斷
+本 Process 的重點不是 `InInit=False`，而是主程式路徑與檔名高度可疑。
+
+---
+
+### 4.4 鑑識判斷
 
 `Rick And Morty season 1 download.exe` 具有以下可疑特徵：
 
-| 項目   | 分析                          |
-| ---- | --------------------------- |
-| 檔名   | 偽裝成影片下載                     |
-| 副檔名  | 實際為 `.exe`                  |
-| 位置   | 位於 `\Torrents` 下載目錄         |
-| 執行型態 | 32-bit 程式執行於 64-bit Windows |
-| 可疑程度 | 高                           |
+| 項目   | 分析                  |
+| ---- | ------------------- |
+| 檔名   | 偽裝成影片下載             |
+| 副檔名  | 實際為 `.exe`          |
+| 位置   | 位於 `\Torrents` 下載目錄 |
+| 程式型態 | 32-bit 程式           |
+| 可疑程度 | 高                   |
 
 判斷：
 
-```text
+```text id="ev2gvv"
 PID 3820 Rick And Morty 是本次主要可疑程式。
 ```
 
 ---
 
-## 3. PID 3720 - vmware-tray.exe 分析
+## 5. PID 3720 - vmware-tray.exe 分析
 
-### 3.1 主要發現
+### 5.1 主要發現
 
-```text
+```text id="l5v4sb"
 PID: 3720
 Process: vmware-tray.exe
 MappedPath: \Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
@@ -216,23 +267,25 @@ MappedPath: \Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
 
 正常 VMware Tools 程式通常應位於類似：
 
-```text
+```text id="nwoa7d"
 C:\Program Files\VMware\VMware Tools\
 ```
 
 但本次發現的路徑是：
 
-```text
+```text id="utxtco"
 C:\Users\Rick\AppData\Local\Temp\RarSFX0\
 ```
 
 因此此 `vmware-tray.exe` 不像正常 VMware 元件。
 
-### 3.2 模組載入狀況
+---
+
+### 5.2 模組載入狀況
 
 `vmware-tray.exe` 載入多個 .NET Framework 相關模組，例如：
 
-```text
+```text id="1yq5j8"
 \Windows\Microsoft.NET\Framework\v4.0.30319\clr.dll
 \Windows\Microsoft.NET\Framework\v4.0.30319\clrjit.dll
 \Windows\Microsoft.NET\Framework\v4.0.30319\mscoreei.dll
@@ -247,27 +300,31 @@ C:\Users\Rick\AppData\Local\Temp\RarSFX0\
 
 其中 `System.Windows.Forms`、`System.Drawing` 代表它可能具有圖形介面或視窗元件。
 
-### 3.3 InLoad / InInit / InMem 判斷
+---
+
+### 5.3 Loader List 狀態
 
 主程式顯示：
 
-```text
+```text id="gkgnms"
 InLoad: True
 InInit: False
 InMem: True
 ```
 
-代表主程式存在於 Loader List 與記憶體中。這個狀態本身不是最可疑的地方。
+這代表主程式存在於 Loader List 與記憶體中。
 
-真正可疑的是：
+這個狀態本身不是最可疑的地方。真正可疑的是它的執行路徑：
 
-```text
+```text id="evl5yt"
 \Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
 ```
 
 `RarSFX0` 通常與自解壓縮檔釋放的暫存目錄有關，因此此程式可能是被其他執行檔釋放後啟動。
 
-### 3.4 鑑識判斷
+---
+
+### 5.4 鑑識判斷
 
 `vmware-tray.exe` 具有以下可疑特徵：
 
@@ -281,17 +338,17 @@ InMem: True
 
 判斷：
 
-```text
+```text id="6v65ci"
 PID 3720 vmware-tray.exe 很可能是由 Rick And Morty 釋放或啟動的可疑子程式。
 ```
 
 ---
 
-## 4. 兩者關聯分析
+## 6. 兩者關聯分析
 
 從 `LdrModules` 的結果來看，這兩個 Process 的路徑關係非常重要：
 
-```text
+```text id="6zy5ua"
 \Torrents\Rick And Morty season 1 download.exe
 ↓
 \Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
@@ -303,20 +360,20 @@ PID 3720 vmware-tray.exe 很可能是由 Rick And Morty 釋放或啟動的可疑
 
 因此可以推論：
 
-```text
+```text id="0i92nw"
 Rick And Morty season 1 download.exe 執行後，很可能釋放或啟動了 Temp\RarSFX0\vmware-tray.exe。
 ```
 
 ---
 
-## 5. 可疑程度比較
+## 7. 可疑程度比較
 
 |  PID | Process           | 可疑程度 | 原因                                 |
 | ---: | ----------------- | ---- | ---------------------------------- |
 | 3820 | `Rick And Morty`  | 高    | 偽裝成影片下載的 EXE，位於 Torrent 目錄         |
 | 3720 | `vmware-tray.exe` | 高    | 從 Temp `RarSFX0` 執行，名稱偽裝 VMware 元件 |
 
-兩者都是高可疑，但角色不同：
+兩者角色不同：
 
 | Process           | 角色判斷         |
 | ----------------- | ------------ |
@@ -325,13 +382,13 @@ Rick And Morty season 1 download.exe 執行後，很可能釋放或啟動了 Tem
 
 ---
 
-## 6. 結論
+## 8. 結論
 
 本次 `windows.ldrmodules.LdrModules` 分析確認了兩個重要可疑 Process。
 
 第一個是：
 
-```text
+```text id="kntcws"
 PID 3820 - Rick And Morty
 \Torrents\Rick And Morty season 1 download.exe
 ```
@@ -340,7 +397,7 @@ PID 3820 - Rick And Morty
 
 第二個是：
 
-```text
+```text id="rh1g3t"
 PID 3720 - vmware-tray.exe
 \Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
 ```
@@ -349,7 +406,7 @@ PID 3720 - vmware-tray.exe
 
 綜合判斷，這兩個 Process 很可能屬於同一條可疑執行鏈：
 
-```text
+```text id="k8zfwm"
 Rick And Morty season 1 download.exe
 ↓
 Temp\RarSFX0\vmware-tray.exe
@@ -359,18 +416,18 @@ Temp\RarSFX0\vmware-tray.exe
 
 ---
 
-## 7. 後續建議
+## 9. 後續建議
 
 建議接著針對這兩個 PID 執行 `malfind`：
 
-```bash
+```bash id="jnyd54"
 .\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3820
 .\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3720
 ```
 
 如果需要補充記憶體區段資訊，可再執行：
 
-```bash
+```bash id="wz5itp"
 .\vol.exe -f .\OtterCTF.vmem windows.vadinfo.VadInfo --pid 3820
 .\vol.exe -f .\OtterCTF.vmem windows.vadinfo.VadInfo --pid 3720
 ```
