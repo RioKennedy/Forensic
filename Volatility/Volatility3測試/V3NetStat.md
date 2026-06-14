@@ -146,21 +146,3 @@ Windows 系統服務的正常監聽 Port
 ```
 
 因此，本案的網路連線分析仍可透過 `NetScan` 完成。
-
----
-
-## 8. 結論
-
-本次執行 `windows.netstat.NetStat` 時發生 Page Error，導致 Plugin 無法繼續產生結果。
-
-此錯誤可能與記憶體擷取狀態、無效記憶體頁面或 Plugin 解析問題有關，不能直接判斷為惡意行為。
-
-由於 `windows.netscan.NetScan` 已成功取得網路連線資料，因此本次網路分析改以 `NetScan` 為主要依據。
-
-結論如下：
-
-```text
-NetStat 執行失敗，未產生可用結果。
-NetScan 執行成功，可作為本案網路連線分析依據。
-本案網路重點仍為 BitTorrent.exe 的大量 P2P 連線，以及可疑檔案可能來自 Torrent 下載活動。
-```
