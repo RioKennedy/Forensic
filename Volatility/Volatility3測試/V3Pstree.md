@@ -220,98 +220,13 @@ explorer.exe
 
 ## 8. 重要可疑父子關係
 
-### 8.1 explorer.exe → LunarMS.exe
-
-```text
-explorer.exe
-* LunarMS.exe
-```
-
-`LunarMS.exe` 由 `explorer.exe` 啟動，代表它可能是使用者手動執行的程式。
-
-它不是 Windows 預設行程，因此需要進一步確認執行路徑、參數與是否有可疑 DLL 或注入行為。
-
----
-
-### 8.2 explorer.exe → Rick And Morty
-
-```text
-explorer.exe
-* Rick And Morty
-** vmware-tray.ex
-```
-
-`Rick And Morty` 是本次最可疑的行程之一。
-
-可疑原因：
-
-1. 不是 Windows 系統行程。
-2. 名稱不像正式軟體。
-3. 由 `explorer.exe` 啟動。
-4. 擷取記憶體時仍在執行。
-5. 底下還出現 `vmware-tray.ex` 子行程，父子關係不自然。
-
-這個行程應列為後續分析重點。
-
----
-
-### 8.3 explorer.exe → BitTorrent.exe → bittorrentie.e
-
-```text
-explorer.exe
-* BitTorrent.exe
-** bittorrentie.e
-** bittorrentie.e
-```
-
-`BitTorrent.exe` 是 P2P 下載軟體，由 `explorer.exe` 啟動。
-
-它本身不一定是惡意程式，但 P2P 軟體可能與可疑檔案下載有關。
-
-後續應搭配 `netscan` 與 `cmdline` 檢查是否有可疑連線或下載行為。
-
----
-
-### 8.4 WebCompanionIn → sc.exe
-
-```text
-WebCompanionIn
-* sc.exe
-* sc.exe
-* sc.exe
-* sc.exe
-* WebCompanion.e
-```
-
-這是本次 `pstree` 中很重要的線索。
-
-`sc.exe` 是 Windows 服務控制工具，可用於建立、啟動、停止或刪除服務。
-
-本次多個 `sc.exe` 都由 `WebCompanionIn` 啟動，代表 WebCompanion 相關程式可能曾經操作 Windows Service。
-
-後續應使用 `cmdline` 確認 `sc.exe` 的完整命令內容。
-
----
-
-### 8.5 vmtoolsd.exe → cmd.exe
-
-```text
-vmtoolsd.exe
-*** cmd.exe
-```
-
-本次結果中，`cmd.exe` 是由 `vmtoolsd.exe` 啟動。
-
-```text
-PID 3916 cmd.exe
-PPID 1428 vmtoolsd.exe
-CreateTime 2018-08-04 19:34:22
-ExitTime 2018-08-04 19:34:22
-```
-
-這個 `cmd.exe` 啟動與結束時間非常短，而且接近記憶體擷取時間。
-
-在前面的 `psscan` 中，也看到 `cmd.exe` 啟動了 `ipconfig.exe`，代表當時可能有查詢網路資訊的行為。
+| 關係 | 重點 |
+|---|---|
+| explorer.exe → LunarMS.exe | 非系統行程，需確認路徑與參數 |
+| explorer.exe → Rick And Morty | 名稱可疑，優先分析 |
+| explorer.exe → BitTorrent.exe | P2P 軟體，需搭配 netscan 查看連線 |
+| WebCompanionIn → sc.exe | 可能操作 Windows Service |
+| vmtoolsd.exe → cmd.exe | 短時間執行，需確認命令內容 |
 
 ---
 
