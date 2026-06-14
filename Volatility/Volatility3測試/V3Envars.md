@@ -1850,3 +1850,283 @@ PID     Process Block   Variable        Value
 2420    conhost.exe     0x1a18f0        windows_tracing_flags   3
 2420    conhost.exe     0x1a18f0        windows_tracing_logfile C:\BVTBin\Tests\installpackage\csilogfile.log
 ```
+
+
+# windows.envars.Envars 分析
+
+## 1. 執行指令
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.envars.Envars
+```
+
+---
+
+## 2. Plugin 功能簡述
+
+`windows.envars.Envars` 用來列出各 Process 的環境變數。
+
+它可以協助確認：
+
+* Process 所屬使用者
+* 使用者目錄
+* TEMP / TMP 暫存路徑
+* APPDATA / LOCALAPPDATA 路徑
+* 系統名稱
+* 系統路徑與 PowerShell 路徑
+* Process 是在使用者環境還是 SYSTEM 環境執行
+
+---
+
+## 3. 重要欄位簡單說明
+
+| 欄位             | 說明                         |
+| -------------- | -------------------------- |
+| `COMPUTERNAME` | 電腦名稱                       |
+| `USERNAME`     | 執行該 Process 的使用者           |
+| `USERPROFILE`  | 使用者資料夾                     |
+| `HOMEPATH`     | 使用者家目錄路徑                   |
+| `APPDATA`      | 使用者 Roaming AppData 路徑     |
+| `LOCALAPPDATA` | 使用者 Local AppData 路徑       |
+| `TEMP` / `TMP` | 暫存資料夾                      |
+| `Path`         | Process 可搜尋執行檔的路徑          |
+| `SESSIONNAME`  | 使用者登入 Session，例如 `Console` |
+
+---
+
+## 4. 系統環境資訊
+
+本次結果中，多個 Process 顯示相同系統資訊：
+
+| 項目              | 結果                                                    |
+| --------------- | ----------------------------------------------------- |
+| 電腦名稱            | `WIN-LO6FAF3DTFE`                                     |
+| 作業系統            | `Windows_NT`                                          |
+| 系統磁碟            | `C:`                                                  |
+| 系統目錄            | `C:\Windows`                                          |
+| 處理器架構           | `AMD64`                                               |
+| CPU 數量          | `2`                                                   |
+| PowerShell 模組路徑 | `C:\Windows\system32\WindowsPowerShell\v1.0\Modules\` |
+
+這些資訊與前面 `windows.info.Info`、`pslist` 的分析結果一致。
+
+---
+
+## 5. 使用者環境確認
+
+本次最重要的使用者是：
+
+```text
+Rick
+```
+
+多個使用者層 Process 都顯示：
+
+```text
+USERNAME = Rick
+USERPROFILE = C:\Users\Rick
+HOMEPATH = \Users\Rick
+APPDATA = C:\Users\Rick\AppData\Roaming
+LOCALAPPDATA = C:\Users\Rick\AppData\Local
+TEMP = C:\Users\Rick\AppData\Local\Temp
+```
+
+代表這些 Process 是在 `Rick` 使用者環境下執行。
+
+---
+
+## 6. 重要 Process 環境整理
+
+|  PID | Process            | USERNAME           | USERPROFILE / TEMP                         | 判斷                   |
+| ---: | ------------------ | ------------------ | ------------------------------------------ | -------------------- |
+| 2728 | `explorer.exe`     | `Rick`             | `C:\Users\Rick`                            | 使用者桌面環境              |
+| 2836 | `BitTorrent.exe`   | `Rick`             | `C:\Users\Rick\AppData\Local\Temp`         | 使用者下載活動相關            |
+|  708 | `LunarMS.exe`      | `Rick`             | `C:\Users\Rick\AppData\Local\Temp`         | 使用者執行的程式             |
+| 3820 | `Rick And Morty`   | `Rick`             | `C:\Users\Rick\AppData\Local\Temp`         | 高度可疑程式               |
+| 3720 | `vmware-tray.exe`  | `Rick`             | `C:\Users\Rick\AppData\Local\Temp`         | 可疑子行程                |
+| 3304 | `notepad.exe`      | `Rick`             | `C:\Users\Rick\AppData\Local\Temp`         | 開啟 Flag 檔案           |
+| 3880 | `WebCompanionIn`   | `WIN-LO6FAF3DTFE$` | `C:\Windows\system32\config\systemprofile` | SYSTEM / service 類環境 |
+| 3496 | `Lavasoft.WCAss`   | `WIN-LO6FAF3DTFE$` | `C:\Windows\system32\config\systemprofile` | WebCompanion 服務      |
+| 3856 | `WebCompanion.exe` | `WIN-LO6FAF3DTFE$` | `C:\Windows\system32\config\systemprofile` | WebCompanion 更新行為    |
+
+---
+
+## 7. 關鍵發現
+
+### 7.1 使用者 Rick 是主要操作帳號
+
+`explorer.exe`、`BitTorrent.exe`、`LunarMS.exe`、`Rick And Morty`、`notepad.exe` 都在 `Rick` 的使用者環境下執行。
+
+這代表本次可疑活動主要與使用者：
+
+```text
+Rick
+```
+
+有關。
+
+---
+
+### 7.2 Rick And Morty 執行於 Rick 使用者環境
+
+`Rick And Morty` 的環境變數顯示：
+
+```text
+USERNAME = Rick
+USERPROFILE = C:\Users\Rick
+TEMP = C:\Users\Rick\AppData\Local\Temp
+SESSIONNAME = Console
+```
+
+這代表該可疑程式是在使用者登入桌面環境中執行，而不是系統服務自動啟動。
+
+搭配前面 `cmdline` 結果：
+
+```text
+C:\Torrents\Rick And Morty season 1 download.exe
+```
+
+可判斷此程式很可能是使用者下載後執行的可疑 EXE。
+
+---
+
+### 7.3 vmware-tray.exe 也在 Rick 使用者環境下
+
+`vmware-tray.exe` 的環境變數同樣顯示 `USERNAME = Rick`，而且 TEMP 指向：
+
+```text
+C:\Users\Rick\AppData\Local\Temp
+```
+
+搭配前面 `cmdline` 的路徑：
+
+```text
+C:\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
+```
+
+可以判斷它與 `Rick And Morty` 的可疑執行鏈有關。
+
+---
+
+### 7.4 WebCompanionIn 屬於 SYSTEM 類環境
+
+`WebCompanionIn` 的環境變數顯示：
+
+```text
+USERNAME = WIN-LO6FAF3DTFE$
+USERPROFILE = C:\Windows\system32\config\systemprofile
+TEMP = C:\Windows\TEMP
+```
+
+這代表它不是一般 Rick 使用者環境，而是偏向系統或服務環境。
+
+搭配前面 `pstree` 中 `WebCompanionIn → sc.exe`，可推測它可能正在進行服務建立、更新或操作。
+
+---
+
+### 7.5 notepad.exe 確認與 Rick 使用者有關
+
+`notepad.exe` 的環境變數顯示：
+
+```text
+USERNAME = Rick
+USERPROFILE = C:\Users\Rick
+```
+
+前面 `cmdline` 已顯示它開啟：
+
+```text
+C:\Users\Rick\Desktop\Flag.txt.WINDOWS
+```
+
+因此可以確認 `Flag.txt.WINDOWS` 與 Rick 使用者桌面環境有關。
+
+---
+
+## 8. 本次 Envars 鑑識重點
+
+本次 `envars` 的主要價值是確認可疑 Process 的執行環境。
+
+重要發現如下：
+
+1. 主要使用者帳號為 `Rick`。
+2. 電腦名稱為 `WIN-LO6FAF3DTFE`。
+3. `Rick And Morty` 是在 Rick 使用者環境下執行。
+4. `vmware-tray.exe` 也在 Rick 使用者環境下執行，且與 Temp 路徑有關。
+5. `notepad.exe` 在 Rick 使用者環境下執行，與 `Flag.txt.WINDOWS` 線索吻合。
+6. `WebCompanionIn` 與 `Lavasoft.WCAss` 則偏向 system profile / service 環境。
+
+---
+
+## 9. 後續建議分析
+
+### 9.1 搜尋 Rick 使用者桌面 Flag 檔案
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.filescan.FileScan > filescan.txt
+findstr /i "Flag" filescan.txt
+findstr /i "Desktop" filescan.txt
+```
+
+### 9.2 分析 Rick And Morty
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.dlllist.DllList --pid 3820
+.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3820
+```
+
+### 9.3 分析可疑 Temp 子行程
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.dlllist.DllList --pid 3720
+.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3720
+```
+
+### 9.4 分析網路連線
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan
+```
+
+---
+
+## 10. 報告用結論
+
+本次使用 `windows.envars.Envars` 分析各 Process 的環境變數。
+
+結果顯示，主要使用者帳號為 `Rick`，使用者目錄為：
+
+```text
+C:\Users\Rick
+```
+
+其中 `explorer.exe`、`BitTorrent.exe`、`LunarMS.exe`、`Rick And Morty`、`vmware-tray.exe` 與 `notepad.exe` 都在 Rick 使用者環境下執行。這表示本次可疑活動主要發生在 Rick 的登入桌面環境中。
+
+`Rick And Morty` 的環境變數顯示其使用 `Rick` 使用者的 TEMP、APPDATA 與 USERPROFILE，搭配前面 `cmdline` 中的 `C:\Torrents\Rick And Morty season 1 download.exe`，可判斷該程式很可能是使用者下載並執行的可疑檔案。
+
+另外，`WebCompanionIn`、`Lavasoft.WCAss` 與 `WebCompanion.exe` 則顯示為 `WIN-LO6FAF3DTFE$` 與 system profile 環境，代表其行為較接近服務或系統層級操作。這與前面觀察到的 `WebCompanionIn → sc.exe` 服務操作線索一致。
+
+綜合判斷，`envars` 結果確認了可疑程式的使用者環境，並補強 `Rick` 使用者、`Temp` 目錄、`Flag.txt.WINDOWS` 與 `WebCompanion` 服務行為之間的關聯。
+
+---
+
+## 11. 簡短結論
+
+`windows.envars.Envars` 顯示本次主要使用者為：
+
+```text
+Rick
+```
+
+重要可疑環境關係為：
+
+```text
+Rick → BitTorrent.exe
+Rick → Rick And Morty
+Rick → vmware-tray.exe
+Rick → notepad.exe → Flag.txt.WINDOWS
+```
+
+其中 `Rick And Morty` 和 `vmware-tray.exe` 都使用 Rick 的使用者環境與 Temp 路徑，需列為後續分析重點。
+
+`WebCompanionIn` 則屬於 system profile 環境，可能與服務操作有關。
