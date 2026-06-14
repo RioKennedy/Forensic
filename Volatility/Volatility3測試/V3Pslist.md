@@ -1,76 +1,8 @@
 ```
-D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -vvv -f .\OtterCTF.vmem windows.pslist.PsList
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.pslist.PsList
 Volatility 3 Framework 2.5.0
-INFO     volatility3.cli: Volatility plugins path: ['D:\\Forensic\\G140A006\\VolatilityWorkbench\\plugins', 'C:\\Users\\rioke\\AppData\\Local\\Temp\\_MEI112922\\volatility3\\plugins', 'C:\\Users\\rioke\\AppData\\Local\\Temp\\_MEI112922\\volatility3\\framework\\plugins']
-INFO     volatility3.cli: Volatility symbols path: ['D:\\Forensic\\G140A006\\VolatilityWorkbench\\symbols', 'C:\\Users\\rioke\\AppData\\Local\\Temp\\_MEI112922\\volatility3\\symbols', 'C:\\Users\\rioke\\AppData\\Local\\Temp\\_MEI112922\\volatility3\\framework\\symbols']
-INFO     volatility3.framework.automagic: Detected a windows category plugin
-INFO     volatility3.framework.automagic: Running automagic: ConstructionMagic
-Level 9  volatility3.framework.configuration.requirements: IndexError - No configuration provided: plugins.PsList.kernel.layer_name
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.configuration.requirements: IndexError - No configuration provided: plugins.PsList.kernel.layer_name
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.automagic.construct_layers: Failed on requirement: plugins.PsList.kernel
-Level 9  volatility3.framework.configuration.requirements: IndexError - No configuration provided: plugins.PsList.kernel.layer_name
-Level 9  volatility3.framework.automagic.construct_layers: Failed on requirement: plugins.PsList.kernel.layer_name
-Level 9  volatility3.framework.configuration.requirements: IndexError - No configuration provided: plugins.PsList.kernel.layer_name
-Level 9  volatility3.framework.automagic.construct_layers: Failed on requirement: plugins.PsList.kernel
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.automagic.construct_layers: Failed on requirement: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.automagic.construct_layers: Failed on requirement: plugins.PsList.kernel
-Level 9  volatility3.framework.configuration.requirements: IndexError - No configuration provided: plugins.PsList.kernel.layer_name
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.automagic.construct_layers: Failed on requirement: plugins.PsList
-INFO     volatility3.framework.automagic: Running automagic: SymbolCacheMagic
-INFO     volatility3.framework.automagic: Running automagic: LayerStacker
-Level 9  volatility3.framework.configuration.requirements: IndexError - No configuration provided: plugins.PsList.kernel.layer_name
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-DEBUG    volatility3.framework.automagic.windows: Detecting Self-referential pointer for recent windows
-DEBUG    volatility3.framework.automagic.windows: DtbSelfRef64bit test succeeded at 0x187000
-DEBUG    volatility3.framework.automagic.windows: DTB was found at: 0x187000
-Level 9  volatility3.framework.configuration.requirements: IndexError - No configuration provided: plugins.PsList.kernel.layer_name
-Level 9  volatility3.framework.configuration.requirements: IndexError - No configuration provided: plugins.PsList.kernel.layer_name
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.configuration.requirements: IndexError - No configuration provided: plugins.PsList.kernel.layer_name
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.automagic.construct_layers: Failed on requirement: plugins.PsList.kernel
-Level 9  volatility3.framework.configuration.requirements: IndexError - No configuration provided: plugins.PsList.kernel.layer_name
-Level 9  volatility3.framework.configuration.requirements: IndexError - No configuration provided: plugins.PsList.kernel.layer_name.memory_layer
-Level 9  volatility3.framework.interfaces.configuration: TypeError - kernel_virtual_offset requirements only accept int type: None
-Level 9  volatility3.framework.interfaces.configuration: TypeError - kernel_virtual_offset requirements only accept int type: None
-Level 9  volatility3.framework.interfaces.configuration: TypeError - kernel_banner requirements only accept str type: None
-Level 9  volatility3.framework.interfaces.configuration: TypeError - kernel_banner requirements only accept str type: None
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.automagic.construct_layers: Failed on requirement: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.automagic.construct_layers: Failed on requirement: plugins.PsList.kernel
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.automagic.construct_layers: Failed on requirement: plugins.PsList
-DEBUG    volatility3.framework.automagic.stacker: Stacked layers: ['IntelLayer', 'FileLayer']
-INFO     volatility3.framework.automagic: Running automagic: WinSwapLayers
-INFO     volatility3.framework.automagic: Running automagic: KernelPDBScanner
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-Level 9  volatility3.framework.configuration.requirements: Symbol table requirement not yet fulfilled: plugins.PsList.kernel.symbol_table_name
-DEBUG    volatility3.framework.automagic.pdbscan: Kernel base determination - searching layer module list structure
-DEBUG    volatility3.framework.automagic.pdbscan: Setting kernel_virtual_offset to 0xf80002a52000
-DEBUG    volatility3.framework.symbols.windows.pdbutil: Using symbol library: ntkrnlmp.pdb\3844DBB920174967BE7AA4A2C20430FA-2
-INFO     volatility3.schemas: Dependency for validation unavailable: jsonschema
-DEBUG    volatility3.schemas: All validations will report success, even with malformed input
-INFO     volatility3.framework.automagic: Running automagic: SymbolFinder
-INFO     volatility3.framework.automagic: Running automagic: KernelModule
-
+Progress:  100.00               PDB scanning finished
 PID     PPID    ImageFileName   Offset(V)       Threads Handles SessionId       Wow64   CreateTime      ExitTime       File output
-INFO     volatility3.schemas: Dependency for validation unavailable: jsonschema
-DEBUG    volatility3.schemas: All validations will report success, even with malformed input
-DEBUG    volatility3.framework.symbols: Unresolved reference: symbol_table_name1!_EPROCESS_QUOTA_BLOCK
-DEBUG    volatility3.framework.symbols: Unresolved reference: symbol_table_name1!_PAGEFAULT_HISTORY
-DEBUG    volatility3.framework.symbols: Unresolved reference: symbol_table_name1!_PSP_CPU_QUOTA_APC
-DEBUG    volatility3.framework.symbols: Unresolved reference: symbol_table_name1!_JOB_ACCESS_STATE
-DEBUG    volatility3.framework.symbols: Unresolved reference: symbol_table_name1!_ACTIVATION_CONTEXT_DATA
-DEBUG    volatility3.framework.symbols: Unresolved reference: symbol_table_name1!_FLS_CALLBACK_INFO
-DEBUG    volatility3.framework.symbols: Unresolved reference: symbol_table_name1!_ASSEMBLY_STORAGE_MAP
-DEBUG    volatility3.framework.symbols: Unresolved reference: symbol_table_name1!_SCSI_REQUEST_BLOCK
 
 4       0       System  0xfa8018d44740  95      411     N/A     False   2018-08-04 19:26:03.000000      N/A     Disabled
 260     4       smss.exe        0xfa801947e4d0  2       30      N/A     False   2018-08-04 19:26:03.000000      N/A    Disabled
