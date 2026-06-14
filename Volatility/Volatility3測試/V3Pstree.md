@@ -71,3 +71,337 @@ PID     PPID    ImageFileName   Offset(V)       Threads Handles SessionId       
 * 3504  3880    sc.exe  0xfa801aa72b30  0       -       0       False   2018-08-04 19:33:48.000000      2018-08-04 19:33:48.000000
 3304    3132    notepad.exe     0xfa801b1fd960  2       79      1       False   2018-08-04 19:34:10.000000      N/A
 ```
+
+# windows.pstree.PsTree 分析
+
+## 1. 執行指令
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.pstree.PsTree
+```
+
+---
+
+## 2. Plugin 功能說明
+
+`windows.pstree.PsTree` 是 Volatility 3 中用來顯示 Process 父子關係的 Plugin。
+
+它會用樹狀結構顯示每個 Process 是由哪個父行程啟動的。
+
+在記憶體鑑識中，`pstree` 很重要，因為它可以幫助判斷：
+
+* 行程父子關係是否正常
+* 可疑程式是由誰啟動
+* 是否有異常的命令列或服務操作
+* 是否有短時間執行後結束的可疑 Process
+
+---
+
+## 3. PsTree 星號說明
+
+`pstree` 結果前面的 `*` 代表層級關係。
+
+例如：
+
+```text
+2728 explorer.exe
+* 708 LunarMS.exe
+* 3820 Rick And Morty
+```
+
+代表 `LunarMS.exe` 和 `Rick And Morty` 都是由 `explorer.exe` 啟動。
+
+星號越多，代表層級越深：
+
+| 顯示方式  | 意義                |
+| ----- | ----------------- |
+| 無星號   | 最上層或獨立顯示的 Process |
+| `*`   | 子行程               |
+| `**`  | 孫行程               |
+| `***` | 更下一層行程            |
+
+---
+
+## 4. 正常系統行程關係
+
+本次結果中，Windows 系統核心行程關係大致正常。
+
+```text
+System
+* smss.exe
+
+wininit.exe
+* services.exe
+* lsass.exe
+* lsm.exe
+```
+
+這些是 Windows 開機後常見的正常行程。
+
+| Process        | 說明                    |
+| -------------- | --------------------- |
+| `System`       | Windows 系統核心行程        |
+| `smss.exe`     | Session Manager       |
+| `wininit.exe`  | Windows 初始化行程         |
+| `services.exe` | Windows 服務管理程式        |
+| `lsass.exe`    | 帳號驗證與安全性相關            |
+| `lsm.exe`      | Local Session Manager |
+
+目前這些系統行程的父子關係沒有明顯異常。
+
+---
+
+## 5. services.exe 底下的服務行程
+
+`services.exe` 是 Windows 服務管理程式，許多系統服務都會由它啟動。
+
+本次可看到多個服務行程：
+
+```text
+services.exe
+** svchost.exe
+** vmtoolsd.exe
+** vmacthlp.exe
+** spoolsv.exe
+** SearchIndexer
+** Lavasoft.WCAss
+```
+
+其中大部分是正常服務，例如 `svchost.exe`、`spoolsv.exe`、`SearchIndexer`。
+
+但是 `Lavasoft.WCAss` 需要注意，因為它與 WebCompanion 相關，可能屬於 PUP，也就是潛在不需要程式。
+
+---
+
+## 6. VMware 相關行程
+
+本次結果中可以看到 VMware 相關行程：
+
+```text
+vmtoolsd.exe
+vmacthlp.exe
+VGAuthService
+vmware-tray.exe
+```
+
+這代表此記憶體映像檔來自 VMware 虛擬機器環境。
+
+這也與 `OtterCTF.vmem` 的 `.vmem` 格式相符。
+
+---
+
+## 7. explorer.exe 底下的使用者行程
+
+本次 `explorer.exe` 底下出現多個使用者啟動的程式：
+
+```text
+explorer.exe
+* LunarMS.exe
+* chrome.exe
+* Rick And Morty
+* vmtoolsd.exe
+* BitTorrent.exe
+* WebCompanion.e
+```
+
+`explorer.exe` 是 Windows 桌面行程。
+如果某個程式是由 `explorer.exe` 啟動，通常代表它可能是使用者從桌面、資料夾或捷徑執行。
+
+其中需要注意的行程有：
+
+| Process          |  PID | 原因                  |
+| ---------------- | ---: | ------------------- |
+| `LunarMS.exe`    |  708 | 非 Windows 預設行程      |
+| `Rick And Morty` | 3820 | 名稱可疑，非系統行程          |
+| `BitTorrent.exe` | 2836 | P2P 下載軟體            |
+| `WebCompanion.e` | 2844 | WebCompanion 相關，已結束 |
+
+---
+
+## 8. 重要可疑父子關係
+
+### 8.1 explorer.exe → LunarMS.exe
+
+```text
+explorer.exe
+* LunarMS.exe
+```
+
+`LunarMS.exe` 由 `explorer.exe` 啟動，代表它可能是使用者手動執行的程式。
+
+它不是 Windows 預設行程，因此需要進一步確認執行路徑、參數與是否有可疑 DLL 或注入行為。
+
+---
+
+### 8.2 explorer.exe → Rick And Morty
+
+```text
+explorer.exe
+* Rick And Morty
+** vmware-tray.ex
+```
+
+`Rick And Morty` 是本次最可疑的行程之一。
+
+可疑原因：
+
+1. 不是 Windows 系統行程。
+2. 名稱不像正式軟體。
+3. 由 `explorer.exe` 啟動。
+4. 擷取記憶體時仍在執行。
+5. 底下還出現 `vmware-tray.ex` 子行程，父子關係不自然。
+
+這個行程應列為後續分析重點。
+
+---
+
+### 8.3 explorer.exe → BitTorrent.exe → bittorrentie.e
+
+```text
+explorer.exe
+* BitTorrent.exe
+** bittorrentie.e
+** bittorrentie.e
+```
+
+`BitTorrent.exe` 是 P2P 下載軟體，由 `explorer.exe` 啟動。
+
+它本身不一定是惡意程式，但 P2P 軟體可能與可疑檔案下載有關。
+
+後續應搭配 `netscan` 與 `cmdline` 檢查是否有可疑連線或下載行為。
+
+---
+
+### 8.4 WebCompanionIn → sc.exe
+
+```text
+WebCompanionIn
+* sc.exe
+* sc.exe
+* sc.exe
+* sc.exe
+* WebCompanion.e
+```
+
+這是本次 `pstree` 中很重要的線索。
+
+`sc.exe` 是 Windows 服務控制工具，可用於建立、啟動、停止或刪除服務。
+
+本次多個 `sc.exe` 都由 `WebCompanionIn` 啟動，代表 WebCompanion 相關程式可能曾經操作 Windows Service。
+
+後續應使用 `cmdline` 確認 `sc.exe` 的完整命令內容。
+
+---
+
+### 8.5 vmtoolsd.exe → cmd.exe
+
+```text
+vmtoolsd.exe
+*** cmd.exe
+```
+
+本次結果中，`cmd.exe` 是由 `vmtoolsd.exe` 啟動。
+
+```text
+PID 3916 cmd.exe
+PPID 1428 vmtoolsd.exe
+CreateTime 2018-08-04 19:34:22
+ExitTime 2018-08-04 19:34:22
+```
+
+這個 `cmd.exe` 啟動與結束時間非常短，而且接近記憶體擷取時間。
+
+在前面的 `psscan` 中，也看到 `cmd.exe` 啟動了 `ipconfig.exe`，代表當時可能有查詢網路資訊的行為。
+
+---
+
+## 9. 本次 PsTree 鑑識重點
+
+本次 `pstree` 主要發現：
+
+1. Windows 系統行程父子關係大致正常。
+2. 此記憶體映像檔來自 VMware 虛擬機器環境。
+3. `LunarMS.exe` 由 `explorer.exe` 啟動，需進一步分析。
+4. `Rick And Morty` 由 `explorer.exe` 啟動，名稱可疑，是高優先分析目標。
+5. `BitTorrent.exe` 由 `explorer.exe` 啟動，可能與下載活動有關。
+6. `WebCompanionIn` 啟動多個 `sc.exe`，可能涉及服務操作。
+7. `vmtoolsd.exe` 啟動短暫的 `cmd.exe`，需透過 `cmdline` 確認內容。
+
+---
+
+## 10. 後續建議分析指令
+
+建議下一步先分析命令列：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine
+```
+
+針對可疑行程：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 708
+.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 3820
+.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 3880
+.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 3916
+```
+
+分析網路連線：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan
+```
+
+分析服務：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.svcscan.SvcScan
+```
+
+針對可疑行程做 DLL 與注入分析：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.dlllist.DllList --pid 3820
+.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3820
+
+.\vol.exe -f .\OtterCTF.vmem windows.dlllist.DllList --pid 708
+.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 708
+```
+
+---
+
+## 11. 報告用結論
+
+本次使用 Volatility 3 的 `windows.pstree.PsTree` Plugin 分析 `OtterCTF.vmem` 中的 Process 父子關係。
+
+分析結果顯示，Windows 系統核心行程與服務行程大致正常，例如 `System`、`smss.exe`、`wininit.exe`、`services.exe`、`lsass.exe` 等。結果中也出現多個 VMware 相關行程，代表此記憶體映像檔來自 VMware 虛擬機器環境。
+
+在可疑行程方面，`LunarMS.exe`、`Rick And Morty`、`BitTorrent.exe` 與 `WebCompanionIn` 需要進一步分析。其中 `Rick And Morty` 由 `explorer.exe` 啟動，名稱明顯可疑，應列為高優先目標。`WebCompanionIn` 啟動多個 `sc.exe`，可能代表服務建立、修改或刪除行為。除此之外，`vmtoolsd.exe` 啟動短暫的 `cmd.exe`，且該時間接近記憶體擷取時間，也需要透過 `cmdline` 確認命令內容。
+
+綜合判斷，本次 `pstree` 未發現明顯系統核心行程異常，但確認多個重要可疑父子關係，後續應使用 `cmdline`、`netscan`、`svcscan`、`dlllist` 與 `malfind` 進一步交叉分析。
+
+---
+
+## 12. 簡短結論
+
+`windows.pstree.PsTree` 成功顯示 Process 父子關係。
+
+本次最重要的可疑關係為：
+
+```text
+explorer.exe → LunarMS.exe
+explorer.exe → Rick And Morty
+explorer.exe → BitTorrent.exe
+WebCompanionIn → sc.exe
+vmtoolsd.exe → cmd.exe
+```
+
+其中 `Rick And Morty`、`LunarMS.exe`、`WebCompanionIn → sc.exe` 是後續分析重點。
+
+建議下一步執行：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine
+.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan
+.\vol.exe -f .\OtterCTF.vmem windows.svcscan.SvcScan
+```
