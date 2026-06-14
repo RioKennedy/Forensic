@@ -1,5 +1,60 @@
 # 測試內容
 
+- vol.exe -f .\OtterCTF.vmem windows.verinfo.VerInfo
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.verinfo.VerInfo
+Volatility 3 Framework 2.5.0
+Progress:  100.00               PDB scanning finished
+PID     Process Base    Name    Major   Minor   Product Build
+
+N/A     N/A     0xf80002a52000  ntoskrnl.exe    6       1       7601    17514
+N/A     N/A     0xf80002a09000  hal.dll -       -       -       -
+N/A     N/A     0xf80000bb6000  kdcom.dll       -       -       -       -
+N/A     N/A     0xf88000c1f000  mcupdate.dll    -       -       -       -
+N/A     N/A     0xf88000c6e000  PSHED.dll       -       -       -       -
+N/A     N/A     0xf88000c82000  CLFS.SYS        -       -       -       -
+N/A     N/A     0xf88000ce0000  CI.dll  -       -       -       -
+N/A     N/A     0xf88000efa000  Wdf01000.sys    -       -       -       -
+N/A     N/A     0xf88000f9e000  WDFLDR.SYS      -       -       -       -
+N/A     N/A     0xf88000e00000  ACPI.sys        -       -       -       -
+N/A     N/A     0xf88000e57000  WMILIB.SYS      -       -       -       -
+N/A     N/A     0xf88000e60000  msisadrv.sys    -       -       -       -
+N/A     N/A     0xf88000e6a000  pci.sys -       -       -       -
+N/A     N/A     0xf88000e9d000  vdrvroot.sys    -       -       -       -
+N/A     N/A     0xf88000eaa000  partmgr.sys     -       -       -       -
+N/A     N/A     0xf88000ebf000  compbatt.sys    -       -       -       -
+N/A     N/A     0xf88000ec8000  BATTC.SYS       -       -       -       -
+N/A     N/A     0xf88000ed4000  volmgr.sys      -       -       -       -
+N/A     N/A     0xf88000da0000  volmgrx.sys     -       -       -       -
+N/A     N/A     0xf88000ee9000  intelide.sys    -       -       -       -
+N/A     N/A     0xf88000fad000  PCIIDEX.SYS     -       -       -       -
+N/A     N/A     0xf88000fbd000  vmci.sys        -       -       -       -
+N/A     N/A     0xf88000fd6000  mountmgr.sys    -       -       -       -
+N/A     N/A     0xf88000c00000  vsock.sys       -       -       -       -
+N/A     N/A     0xf88000ff0000  atapi.sys       -       -       -       -
+N/A     N/A     0xf880010ae000  ataport.SYS     -       -       -       -
+N/A     N/A     0xf880010d8000  lsi_sas.sys     -       -       -       -
+N/A     N/A     0xf880010f5000  storport.sys    -       -       -       -
+N/A     N/A     0xf88001158000  msahci.sys      -       -       -       -
+N/A     N/A     0xf88001163000  amdxata.sys     -       -       -       -
+N/A     N/A     0xf8800116e000  fltmgr.sys      -       -       -       -
+N/A     N/A     0xf880011ba000  fileinfo.sys    -       -       -       -
+N/A     N/A     0xf8800125d000  Ntfs.sys        -       -       -       -
+N/A     N/A     0xf88001000000  msrpc.sys       -       -       -       -
+N/A     N/A     0xf88001200000  ksecdd.sys      -       -       -       -
+N/A     N/A     0xf88001474000  cng.sys -       -       -       -
+N/A     N/A     0xf880014e6000  pcw.sys -       -       -       -
+N/A     N/A     0xf880014f7000  Fs_Rec.sys      -       -       -       -
+N/A     N/A     0xf88001501000  ndis.sys        -       -       -       -
+N/A     N/A     0xf88001400000  NETIO.SYS       -       -       -       -
+N/A     N/A     0xf8800121b000  ksecpkg.sys     -       -       -       -
+N/A     N/A     0xf88001637000  tcpip.sys       -       -       -       -
+N/A     N/A     0xf8800183b000  fwpkclnt.sys    -       -       -       -
+N/A     N/A     0xf88001885000  vmstorfl.sys    -       -       -       -
+...
+....
+.....
+```
 
 - vol.exe -f .\OtterCTF.vmem windows.verinfo.VerInfo | findstr 3820
 ```
