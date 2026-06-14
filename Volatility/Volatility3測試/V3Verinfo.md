@@ -213,14 +213,3 @@ Temp\RarSFX0\vmware-tray.exe
 ```
 
 這兩個檔案仍然屬於高度可疑執行鏈。
-
----
-
-## 7. 結論
-
-`windows.verinfo.VerInfo` 結果顯示，`PID 3820 Rick And Morty` 的主程式沒有任何版本資訊，代表它不像一般正常軟體。
-
-`PID 3720 vmware-tray.exe` 雖然有版本號 `1.0.0.0`，但版本資訊過於簡單，而且沒有顯示 VMware 相關產品特徵。再加上它位於 `Temp\RarSFX0` 目錄，因此不像正常 VMware Tools 元件。
-
-因此，本次 `VerInfo` 結果支持前面判斷：`Rick And Morty` 是主要可疑執行檔，而 `vmware-tray.exe` 很可能是其釋放或啟動的可疑子程式。
-
