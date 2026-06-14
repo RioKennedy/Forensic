@@ -368,6 +368,15 @@ WebCompanion 安裝 / 更新 / 下載行為
 
 `PID 708 LunarMS.exe` 有 TCP 連線紀錄：
 
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan | findstr 708
+0x7d6124d0 100.0TCPv4   192.168.202.131n49530fin77.102.199.102  7575    CLOSED  708     LunarMS.exe      -
+0x7d708cf0      TCPv4   192.168.202.131 50364   91.140.89.116   31847   CLOSED  2836    BitTorrent.exe   -
+0x7e413a40      TCPv4   -       0       -       0       CLOSED  708     LunarMS.exe     -
+0x7e521b50      TCPv4   -       0       -       0       CLOSED  708     LunarMS.exe     -
+
+```
+
 ```text
 192.168.202.131:49530 → 77.102.199.102:7575 CLOSED
 ```
