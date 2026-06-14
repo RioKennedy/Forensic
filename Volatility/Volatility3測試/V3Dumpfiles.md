@@ -178,6 +178,8 @@ ImageSectionObject      0x7daad840      vmware-tray.exe file.0x7daad840.0xfa801b
 | `Rick And Morty season 1 download.exe` | `0x7d63dbc0` | 成功匯出 `.dat` 與 `.img` | 主要可疑程式    |
 | `vmware-tray.exe`                      | `0x7daad840` | 成功匯出 `.dat` 與 `.img` | 可疑子程式     |
 
+<img width="656" height="329" alt="image" src="https://github.com/user-attachments/assets/789a6342-18bd-438d-a1ea-8049384f916e" />
+
 ---
 
 ## 8. 鑑識判斷
