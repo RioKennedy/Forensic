@@ -169,3 +169,162 @@ Offset  Base    Size    Name    Path    File output
 0x7feb8e30      0xf880018e9000  0x3a000 rdyboost.sys    \SystemRoot\System32\drivers\rdyboost.sysDisabled
 0x7feb8f20      0xf88001895000  0x4c000 volsnap.sys     \SystemRoot\system32\drivers\volsnap.sysDisabled
 ```
+
+# windows.modscan.ModScan 分析
+
+## 1. Plugin 功能說明
+
+`windows.modscan.ModScan` 用來掃描記憶體中的 Kernel Module 結構。
+
+它主要可以看：
+
+* 系統核心層級載入過哪些 Driver
+* 是否有 Driver 沒有出現在正常模組清單中
+* 是否可能存在隱藏 Driver
+* 是否有可疑 Kernel Rootkit 線索
+
+簡單來說：
+
+```text
+modules = 看正常載入清單
+modscan = 掃描記憶體找 Driver 痕跡
+```
+
+因此 `modscan` 常用來補充 `modules`，確認是否有可疑 Driver 被隱藏。
+
+---
+
+## 2. Plugin 欄位說明
+
+| 欄位            | 說明                           |
+| ------------- | ---------------------------- |
+| `Offset`      | 掃描到的模組結構在記憶體中的位置             |
+| `Base`        | 模組載入到 Kernel memory 的基底位址    |
+| `Size`        | 模組大小                         |
+| `Name`        | 模組名稱，例如 `.sys`、`.dll`、`.exe` |
+| `Path`        | 模組路徑                         |
+| `File output` | 是否輸出檔案，本次為 `Disabled`        |
+
+---
+
+## 3. 結果分析
+
+本次 `modscan` 掃描結果中，大部分模組都屬於正常 Windows Driver 或 VMware Driver。
+
+可分成以下幾類：
+
+| 類別            | 範例                                                | 判斷          |
+| ------------- | ------------------------------------------------- | ----------- |
+| Windows 核心模組  | `ntoskrnl.exe`、`hal.dll`、`win32k.sys`             | 正常          |
+| 檔案系統 Driver   | `Ntfs.sys`、`fltmgr.sys`、`fileinfo.sys`            | 正常          |
+| 網路 Driver     | `tcpip.sys`、`afd.sys`、`HTTP.sys`、`ndis.sys`       | 正常          |
+| VMware Driver | `vmci.sys`、`vsock.sys`、`vmhgfs.sys`、`vmmouse.sys` | 符合虛擬機環境     |
+| 舊式 Driver     | `secdrv.SYS`                                      | 需要記錄，但不一定惡意 |
+
+---
+
+## 4. 與 modules 結果比對
+
+本次 `modscan` 中出現的主要 Driver，大多也在前面的 `modules` 結果中出現過，例如：
+
+```text
+ntoskrnl.exe
+hal.dll
+Ntfs.sys
+tcpip.sys
+ndis.sys
+afd.sys
+vmci.sys
+vsock.sys
+vmhgfs.sys
+vmmouse.sys
+vm3dmp.sys
+vmmemctl.sys
+```
+
+這代表目前沒有明顯看到「只在 modscan 出現、但不在 modules 出現」的可疑 Driver。
+
+因此，暫時沒有明顯隱藏 Kernel Module 的跡象。
+
+---
+
+## 5. VMware 相關 Driver
+
+結果中有多個 VMware 相關 Driver，例如：
+
+```text
+vmci.sys
+vsock.sys
+vmstorfl.sys
+vmrawdsk.sys
+vmhgfs.sys
+vmmouse.sys
+vm3dmp.sys
+vmusbmouse.sys
+vmmemctl.sys
+```
+
+這些 Driver 與 VMware 虛擬機環境相符。
+
+因此這些項目可以視為正常環境特徵，不是主要可疑點。
+
+---
+
+## 6. 需要注意的項目
+
+本次結果開頭有幾筆資料沒有正常名稱與路徑，例如：
+
+```text
+0x2b20891
+0x2e662a7
+0x2eb4145
+0x2d581088
+```
+
+這些項目顯示不完整，可能是掃描時命中的殘留資料、誤判或不完整結構。
+
+目前它們沒有明確的 `Name` 與 `Path`，不能直接判斷為惡意 Driver。
+
+另外可記錄：
+
+```text
+secdrv.SYS
+```
+
+`secdrv.SYS` 是舊版 Windows 常見 Driver，本身不一定惡意，但因為是舊式 Driver，可以在報告中簡單列為需注意項目。
+
+---
+
+## 7. 鑑識判斷
+
+本次 `modscan` 的重點是確認是否有 Kernel Driver 隱藏跡象。
+
+分析結果顯示：
+
+| 項目                | 判斷      |
+| ----------------- | ------- |
+| Windows 核心模組      | 正常      |
+| Windows 系統 Driver | 正常      |
+| VMware Driver     | 符合虛擬機環境 |
+| 可疑 Kernel Driver  | 未明顯發現   |
+| 隱藏 Driver 線索      | 未明顯發現   |
+
+因此，目前沒有明顯證據顯示系統存在 Kernel Rootkit 或隱藏 Driver。
+
+---
+
+## 8. 結論
+
+`windows.modscan.ModScan` 結果顯示，記憶體中掃描到的 Kernel Module 大多為 Windows 正常 Driver 與 VMware 相關 Driver。
+
+與前面的 `windows.modules.Modules` 結果相比，沒有看到明顯額外的陌生 Driver 或隱藏 Kernel Module。
+
+因此，從 Kernel Mode 角度來看，目前沒有明顯 Rootkit 或惡意 Driver 載入跡象。
+
+本案主要可疑重點仍應放在 User Mode 可疑 Process：
+
+```text
+PID 3820 - Rick And Morty
+PID 3720 - vmware-tray.exe
+```
+
