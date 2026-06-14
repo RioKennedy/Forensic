@@ -152,3 +152,232 @@ Offset  Proto   LocalAddr       LocalPort       ForeignAddr     ForeignPort     
 0x7fb9cec0      UDPv4   192.168.202.131 1900    *       0               164     svchost.exe     2018-08-04 19:28:42.000000
 0x7fb9d430      UDPv4   127.0.0.1       58341   *       0               164     svchost.exe     2018-08-04 19:28:42.000000
 ```
+
+
+# windows.netscan.NetScan 分析
+
+## 1. Plugin 功能說明
+
+`windows.netscan.NetScan` 用來掃描記憶體中的網路連線資訊。
+
+它可以查看：
+
+* TCP / UDP 連線
+* Local IP 與 Local Port
+* Foreign IP 與 Foreign Port
+* 連線狀態
+* 對應的 PID 與 Process
+* 連線建立時間
+
+此 Plugin 可用來判斷哪個 Process 有網路活動，以及是否存在可疑外連行為。
+
+---
+
+## 2. Plugin 欄位說明
+
+| 欄位            | 說明                         |
+| ------------- | -------------------------- |
+| `Offset`      | 網路連線物件在記憶體中的位置             |
+| `Proto`       | 通訊協定，例如 TCPv4、UDPv4、TCPv6  |
+| `LocalAddr`   | 本機 IP 位址                   |
+| `LocalPort`   | 本機 Port                    |
+| `ForeignAddr` | 遠端 IP 位址                   |
+| `ForeignPort` | 遠端 Port                    |
+| `State`       | TCP 狀態，例如 LISTENING、CLOSED |
+| `PID`         | 對應 Process ID              |
+| `Owner`       | 對應 Process 名稱              |
+| `Created`     | 連線建立時間                     |
+
+---
+
+## 3. 本機 IP 判斷
+
+本次主要本機 IP 為：
+
+```text
+192.168.202.131
+```
+
+此 IP 應為虛擬機中的內部網路位址。
+
+---
+
+## 4. BitTorrent.exe 網路活動
+
+### 4.1 主要發現
+
+`PID 2836 BitTorrent.exe` 有大量 TCP 與 UDP 連線紀錄。
+
+常見遠端 Port 包含：
+
+```text
+6881
+8999
+51413
+51414
+60405
+59163
+34674
+```
+
+這些連線多數為 `CLOSED`，代表在記憶體擷取前曾經存在過連線。
+
+### 4.2 監聽 Port
+
+`BitTorrent.exe` 也有監聽行為：
+
+```text
+0.0.0.0:20830 LISTENING PID 2836 BitTorrent.exe
+:::20830 LISTENING PID 2836 BitTorrent.exe
+```
+
+另外也有 UDP：
+
+```text
+0.0.0.0:20830 PID 2836 BitTorrent.exe
+```
+
+### 4.3 分析判斷
+
+`BitTorrent.exe` 的大量外部 IP 連線與監聽 Port 符合 P2P 軟體行為。
+
+此結果支持前面判斷：
+
+```text
+系統當時有 BitTorrent 下載活動。
+```
+
+由於本案中可疑檔案 `Rick And Morty season 1 download.exe` 位於 `Torrents` 目錄，因此 BitTorrent 活動可能與可疑檔案來源有關。
+
+---
+
+## 5. WebCompanion 相關連線
+
+### 5.1 WebCompanionInstaller.exe
+
+`PID 3880 WebCompanionIn` 有多筆 HTTP 連線：
+
+```text
+192.168.202.131:50280 → 72.55.154.81:80
+192.168.202.131:50341 → 72.55.154.81:80
+192.168.202.131:50217 → 104.18.21.226:80
+192.168.202.131:50211 → 104.18.20.226:80
+192.168.202.131:50228 → 104.18.20.226:80
+192.168.202.131:50238 → 72.55.154.82:80
+```
+
+### 5.2 WebCompanion.exe / Lavasoft.WCAss
+
+也看到：
+
+```text
+PID 3856 WebCompanion.e → 23.37.43.27:80
+PID 3856 WebCompanion.e → 93.184.220.29:80
+PID 3496 Lavasoft.WCAss → 23.37.43.27:80
+```
+
+### 5.3 分析判斷
+
+這些連線多為 HTTP Port 80，符合 WebCompanion 安裝、更新或下載資料的行為。
+
+WebCompanion 相關 Process 先前已出現服務操作線索，因此這些網路連線可以判斷為：
+
+```text
+WebCompanion 安裝 / 更新 / 下載行為
+```
+
+可疑程度低於 `Rick And Morty` 執行鏈，但仍可列為 PUP 或軟體更新行為。
+
+---
+
+## 6. LunarMS.exe 網路活動
+
+`PID 708 LunarMS.exe` 有 TCP 連線紀錄：
+
+```text
+192.168.202.131:49530 → 77.102.199.102:7575 CLOSED
+```
+
+另外也有幾筆 `LocalAddr` 與 `ForeignAddr` 不完整的 CLOSED 紀錄。
+
+### 分析判斷
+
+`LunarMS.exe` 可能是遊戲程式，因此存在網路連線不一定異常。
+
+但因為前面 `LdrModules` 發現它載入多個 Temp `.tmp` 模組，所以此 Process 仍建議保留為中等注意項目。
+
+---
+
+## 7. Chrome 網路活動
+
+`PID 4076 chrome.exe` 有多筆 UDP 連線，例如：
+
+```text
+0.0.0.0:50762
+0.0.0.0:65452
+0.0.0.0:5353
+```
+
+### 分析判斷
+
+Chrome 出現 UDP 與瀏覽器相關連線屬於常見行為，目前不是主要可疑點。
+
+---
+
+## 8. 系統正常監聽服務
+
+結果中也有多個 Windows 正常服務監聽 Port，例如：
+
+```text
+0.0.0.0:135   svchost.exe
+0.0.0.0:445   System
+0.0.0.0:49152 wininit.exe
+0.0.0.0:49153 svchost.exe
+0.0.0.0:49154 svchost.exe
+0.0.0.0:49155 lsass.exe
+0.0.0.0:49156 services.exe
+```
+
+### 分析判斷
+
+這些多屬於 Windows RPC、SMB、系統服務或動態 Port，沒有明顯異常。
+
+---
+
+## 9. 可疑程度整理
+
+|  PID | Process          | 網路行為               | 判斷                |
+| ---: | ---------------- | ------------------ | ----------------- |
+| 2836 | `BitTorrent.exe` | 大量 P2P 連線、監聽 20830 | 與可疑下載來源有關         |
+| 3880 | `WebCompanionIn` | 多筆 HTTP 80 連線      | 安裝 / 更新 / 下載行為    |
+| 3856 | `WebCompanion.e` | HTTP 80 連線         | WebCompanion 行為   |
+| 3496 | `Lavasoft.WCAss` | HTTP 80 連線         | WebCompanion 服務行為 |
+|  708 | `LunarMS.exe`    | 對外 TCP 連線          | 中等注意              |
+| 4076 | `chrome.exe`     | 一般瀏覽器 UDP 連線       | 較正常               |
+
+---
+
+## 10. 結論
+
+`windows.netscan.NetScan` 結果顯示，系統中最明顯的網路活動來自 `BitTorrent.exe`。
+
+`BitTorrent.exe` 有大量外部 IP 連線，並且監聽 `20830` Port，符合 P2P 下載軟體行為。這與前面發現的可疑檔案：
+
+```text
+\Torrents\Rick And Morty season 1 download.exe
+```
+
+具有關聯性，表示該可疑 EXE 可能來自 Torrent 下載活動。
+
+另外，`WebCompanionInstaller.exe`、`WebCompanion.exe` 與 `Lavasoft.WCAss` 有多筆 HTTP Port 80 連線，符合安裝、更新或下載資料行為。
+
+`LunarMS.exe` 也有對外連線紀錄，但目前可疑程度低於 BitTorrent 與 `Rick And Morty` 執行鏈。
+
+整體判斷，本次 `netscan` 支持以下重點：
+
+```text
+BitTorrent.exe 存在大量 P2P 網路活動。
+可疑檔案 Rick And Morty season 1 download.exe 可能與 Torrent 下載活動有關。
+WebCompanion 相關 Process 有 HTTP 更新 / 下載行為。
+目前主要可疑線索仍集中在 Rick And Morty 與 vmware-tray.exe 執行鏈。
+```
