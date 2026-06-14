@@ -85,36 +85,37 @@ PID     PPID    ImageFileName   Offset(V)       Threads Handles SessionId       
 
 ## 2. Plugin 功能說明
 
-`windows.pslist.PsList` 是 Volatility 3 中用來列出 Windows 記憶體映像檔中正在執行或仍存在於 Active Process List 中的 Process。
+`windows.pslist.PsList` 是 Volatility 3 中用來列出 Windows 記憶體映像檔中行程的 Plugin。
 
-它可以顯示：
+它可以顯示目前仍存在於 Active Process List 中的行程資訊，例如 PID、PPID、行程名稱、建立時間、結束時間、Thread 數量、Handle 數量與 Session ID。
 
-* PID
-* PPID
-* Process Name
-* Process 建立時間
-* Process 結束時間
-* Thread 數量
-* Handle 數量
-* Session ID
-* 是否為 Wow64 程序
-
-在 Windows 記憶體鑑識中，`pslist` 是非常重要的基礎 Plugin。
-它通常是行程分析的第一步，用來了解系統中有哪些 Process，以及哪些 Process 可能可疑。
+在 Windows 記憶體鑑識中，`pslist` 是非常重要的基礎分析工具，通常用來確認系統中有哪些行程，以及初步找出可疑行程。
 
 ---
 
-## 3. 執行結果摘要
+## 3. PsList 欄位簡單說明
 
-本次 `windows.pslist.PsList` 成功列出系統中的 Process。
+| 欄位           | 說明                                                                            |
+| ------------ | ----------------------------------------------------------------------------- |
+| PID          | Process ID，行程編號，用來識別每一個 Process。                                              |
+| PPID         | Parent Process ID，父行程編號，表示這個 Process 是由哪一個 Process 啟動的。                       |
+| Process Name | 行程名稱，也就是執行中的程式名稱，例如 `explorer.exe`、`cmd.exe`。                                 |
+| Process 建立時間 | Process 開始執行的時間，可用來建立事件時間線。                                                   |
+| Process 結束時間 | Process 結束的時間。如果顯示 `N/A`，代表擷取記憶體時該 Process 仍在執行。                              |
+| Thread 數量    | 該 Process 內部執行緒的數量。數量異常偏高時，可能需要進一步確認。                                         |
+| Handle 數量    | 該 Process 開啟的資源數量，例如檔案、Registry、Mutex、Process 等。                              |
+| Session ID   | Process 所屬的登入 Session。`0` 多為系統服務，`1` 通常是使用者桌面環境。                              |
+| Wow64        | 判斷是否為 32-bit 程式在 64-bit Windows 上執行。`True` 代表 32-bit 程式，`False` 代表非 Wow64 程式。 |
 
-從結果可以判斷，此記憶體映像檔擷取時，系統中包含一般 Windows 系統行程、VMware 相關行程、瀏覽器行程，以及數個可疑或需要進一步分析的行程。
+簡單來說，`pslist` 的重點是透過 PID、PPID、行程名稱與建立時間，判斷系統中有哪些 Process，以及它們之間的父子關係。
+
+如果出現不熟悉的 Process、奇怪的父子關係，或短時間建立又結束的 Process，就需要進一步分析。
 
 ---
 
-## 4. 系統基本行程分析
+## 4. 系統正常行程分析
 
-以下為正常 Windows 開機後常見的系統行程：
+本次結果中，可以看到多個 Windows 正常系統行程：
 
 | PID | PPID | Process      | 說明                            |
 | --: | ---: | ------------ | ----------------------------- |
@@ -123,70 +124,16 @@ PID     PPID    ImageFileName   Offset(V)       Threads Handles SessionId       
 | 348 |  336 | csrss.exe    | Client Server Runtime Process |
 | 388 |  380 | csrss.exe    | 使用者 Session 的 csrss           |
 | 396 |  336 | wininit.exe  | Windows 初始化行程                 |
-| 432 |  380 | winlogon.exe | 使用者登入管理                       |
-| 492 |  396 | services.exe | 服務管理行程                        |
-| 500 |  396 | lsass.exe    | Local Security Authority      |
+| 432 |  380 | winlogon.exe | 使用者登入行程                       |
+| 492 |  396 | services.exe | Windows 服務管理行程                |
+| 500 |  396 | lsass.exe    | 帳號驗證與安全性相關行程                  |
 | 508 |  396 | lsm.exe      | Local Session Manager         |
 
-這些行程大多是 Windows 7 系統正常啟動時會出現的 Process。
+這些行程屬於 Windows 正常開機後常見的系統行程，父子關係大致正常。
 
 ---
 
-## 5. 重要正常行程說明
-
-### 5.1 System
-
-```text
-PID: 4
-PPID: 0
-ImageFileName: System
-CreateTime: 2018-08-04 19:26:03
-```
-
-`System` 是 Windows Kernel 的核心行程，PID 通常固定為 4。
-本次結果中 PID 4 正常，沒有明顯異常。
-
----
-
-### 5.2 smss.exe
-
-```text
-PID: 260
-PPID: 4
-ImageFileName: smss.exe
-CreateTime: 2018-08-04 19:26:03
-```
-
-`smss.exe` 是 Session Manager Subsystem，通常由 `System` 建立。
-本次結果中 `smss.exe` 的 PPID 為 4，符合正常父子關係。
-
----
-
-### 5.3 wininit.exe、services.exe、lsass.exe
-
-```text
-wininit.exe  PID 396
-services.exe PID 492
-lsass.exe    PID 500
-```
-
-`wininit.exe` 是 Windows 初始化行程。
-`services.exe` 負責管理 Windows Service。
-`lsass.exe` 負責帳號驗證與安全性相關功能。
-
-本次結果中：
-
-| Process      | PID | PPID |
-| ------------ | --: | ---: |
-| wininit.exe  | 396 |  336 |
-| services.exe | 492 |  396 |
-| lsass.exe    | 500 |  396 |
-
-這些關係大致符合 Windows 正常開機流程。
-
----
-
-## 6. VMware 相關行程
+## 5. VMware 相關行程
 
 本次結果中出現多個 VMware 相關行程：
 
@@ -198,25 +145,25 @@ lsass.exe    PID 500
 | 3720 | 3820 | vmware-tray.ex | VMware Tray 程式       |
 
 這代表此記憶體映像檔很可能來自 VMware 虛擬機器環境。
-這與檔案名稱 `OtterCTF.vmem` 也相符，`.vmem` 通常是 VMware 的記憶體映像檔格式。
+
+這也符合檔案名稱 `OtterCTF.vmem`，因為 `.vmem` 通常是 VMware 產生的記憶體映像檔。
 
 ---
 
-## 7. 使用者層行程分析
+## 6. 使用者層行程
 
-### 7.1 explorer.exe
+### 6.1 explorer.exe
 
 ```text
 PID: 2728
 PPID: 2696
-ImageFileName: explorer.exe
+Process: explorer.exe
 CreateTime: 2018-08-04 19:27:04
 ```
 
-`explorer.exe` 是 Windows 使用者桌面與檔案總管行程。
-大部分使用者開啟的程式都可能由 `explorer.exe` 啟動。
+`explorer.exe` 是 Windows 桌面與檔案總管行程。
 
-本次結果中，多個應用程式是由 `explorer.exe` 啟動，例如：
+本次結果中，多個使用者程式都是由 `explorer.exe` 啟動，例如：
 
 |  PID | Process        |
 | ---: | -------------- |
@@ -226,75 +173,69 @@ CreateTime: 2018-08-04 19:27:04
 | 4076 | chrome.exe     |
 | 3820 | Rick And Morty |
 
-這些行程都需要進一步注意，因為它們屬於使用者層執行的程式。
+這些行程屬於使用者層活動，需要進一步判斷是否正常。
 
 ---
 
-## 8. 可疑或需要注意的行程
+## 7. 可疑或需要注意的行程
 
-本次 `pslist` 結果中，以下行程較值得關注：
+本次 `pslist` 中較需要注意的行程如下：
 
-|  PID | PPID | Process        | 原因                           |
-| ---: | ---: | -------------- | ---------------------------- |
-| 2836 | 2728 | BitTorrent.exe | P2P 軟體，可能涉及下載可疑檔案            |
-| 2308 | 2836 | bittorrentie.e | BitTorrent 子行程               |
-| 2624 | 2836 | bittorrentie.e | BitTorrent 子行程               |
-|  708 | 2728 | LunarMS.exe    | 非系統常見行程，需進一步分析               |
-| 3820 | 2728 | Rick And Morty | 檔名可疑，可能是誘餌或惡意程式              |
-| 3880 | 1484 | WebCompanionIn | Lavasoft WebCompanion 相關，需注意 |
-| 3856 | 3880 | WebCompanion.e | WebCompanion 子行程             |
-| 3496 |  492 | Lavasoft.WCAss | Lavasoft WebCompanion 服務     |
-| 3208 | 3880 | sc.exe         | 短時間執行，可能建立或操作服務              |
-|  452 | 3880 | sc.exe         | 短時間執行，可能建立或操作服務              |
-| 3504 | 3880 | sc.exe         | 短時間執行，可能建立或操作服務              |
-| 2028 | 3880 | sc.exe         | 短時間執行，可能建立或操作服務              |
-| 3304 | 3132 | notepad.exe    | 需要確認內容或來源                    |
-| 3916 | 1428 | cmd.exe        | 短時間執行，需搭配 cmdline 分析         |
-| 2420 |  348 | conhost.exe    | 與 cmd.exe 同時間出現              |
+|  PID | PPID | Process        | 注意原因                     |
+| ---: | ---: | -------------- | ------------------------ |
+| 2836 | 2728 | BitTorrent.exe | P2P 下載軟體，可能與可疑檔案下載有關     |
+| 2308 | 2836 | bittorrentie.e | BitTorrent 子行程           |
+| 2624 | 2836 | bittorrentie.e | BitTorrent 子行程           |
+|  708 | 2728 | LunarMS.exe    | 非 Windows 預設行程，需要進一步分析   |
+| 3820 | 2728 | Rick And Morty | 行程名稱可疑，需優先分析             |
+| 3880 | 1484 | WebCompanionIn | WebCompanion 相關行程        |
+| 3856 | 3880 | WebCompanion.e | WebCompanion 子行程         |
+| 3496 |  492 | Lavasoft.WCAss | Lavasoft WebCompanion 服務 |
+| 3208 | 3880 | sc.exe         | 短時間執行，可能操作服務             |
+|  452 | 3880 | sc.exe         | 短時間執行，可能操作服務             |
+| 3504 | 3880 | sc.exe         | 短時間執行，可能操作服務             |
+| 2028 | 3880 | sc.exe         | 短時間執行，可能操作服務             |
+| 3304 | 3132 | notepad.exe    | 需要確認開啟內容                 |
+| 3916 | 1428 | cmd.exe        | 短時間執行，需確認命令內容            |
+| 2420 |  348 | conhost.exe    | 與 cmd.exe 同時間出現          |
 
 ---
 
-## 9. 重要可疑行程分析
+## 8. 重要可疑行程分析
 
-### 9.1 BitTorrent.exe
+### 8.1 BitTorrent.exe
 
 ```text
 PID: 2836
 PPID: 2728
-ImageFileName: BitTorrent.exe
+Process: BitTorrent.exe
 Wow64: True
 CreateTime: 2018-08-04 19:27:07
 ```
 
 `BitTorrent.exe` 是 P2P 下載軟體。
-它本身不一定是惡意程式，但在鑑識分析中需要特別注意，因為 P2P 軟體常用於下載檔案，可能與惡意檔案來源有關。
 
-本次結果中，`BitTorrent.exe` 是由 `explorer.exe` 啟動，代表可能是使用者主動開啟。
+它本身不一定是惡意程式，但在鑑識分析中需要注意，因為 P2P 軟體可能用來下載未知或可疑檔案。
 
-此外，它還建立了子行程：
+本次 `BitTorrent.exe` 是由 `explorer.exe` 啟動，表示可能是使用者主動執行。
+
+另外，它也產生了兩個子行程：
 
 ```text
 PID 2308 bittorrentie.e
 PID 2624 bittorrentie.e
 ```
 
-建議後續使用：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine
-.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan
-```
-
-確認 BitTorrent 是否有可疑下載路徑或網路連線。
+後續應搭配 `cmdline` 與 `netscan` 檢查 BitTorrent 的執行路徑與網路連線。
 
 ---
 
-### 9.2 LunarMS.exe
+### 8.2 LunarMS.exe
 
 ```text
 PID: 708
 PPID: 2728
-ImageFileName: LunarMS.exe
+Process: LunarMS.exe
 Wow64: True
 CreateTime: 2018-08-04 19:27:39
 ```
@@ -303,28 +244,27 @@ CreateTime: 2018-08-04 19:27:39
 
 原因如下：
 
-1. 它不是 Windows 預設系統行程。
-2. 它由 `explorer.exe` 啟動，代表可能是使用者執行。
-3. 它是 Wow64 程序，代表 32-bit 程式在 64-bit Windows 上執行。
-4. 在 OtterCTF 類型的記憶體題目中，非系統常見 EXE 通常需要優先分析。
+1. 不是 Windows 預設系統行程。
+2. 由 `explorer.exe` 啟動，可能是使用者執行。
+3. `Wow64=True`，代表它是 32-bit 程式在 64-bit Windows 上執行。
+4. 在記憶體鑑識題目中，非系統常見 EXE 通常需要優先分析。
 
-後續建議針對 PID 708 進行深入分析：
+後續建議針對 PID 708 執行：
 
 ```bash
 .\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 708
 .\vol.exe -f .\OtterCTF.vmem windows.dlllist.DllList --pid 708
 .\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 708
-.\vol.exe -f .\OtterCTF.vmem windows.handles.Handles --pid 708
 ```
 
 ---
 
-### 9.3 Rick And Morty
+### 8.3 Rick And Morty
 
 ```text
 PID: 3820
 PPID: 2728
-ImageFileName: Rick And Morty
+Process: Rick And Morty
 Wow64: True
 CreateTime: 2018-08-04 19:32:55
 ```
@@ -334,27 +274,26 @@ CreateTime: 2018-08-04 19:32:55
 原因如下：
 
 1. 不是 Windows 系統行程。
-2. 名稱不像正常應用程式。
-3. 由 `explorer.exe` 啟動，代表可能是使用者執行的檔案。
-4. 是 Wow64 程序，代表 32-bit 程式。
-5. 建立時間接近記憶體擷取時間。
+2. 名稱不像一般正式軟體。
+3. 由 `explorer.exe` 啟動。
+4. 建立時間接近記憶體擷取時間。
+5. `Wow64=True`，代表它是 32-bit 程式。
 
-此行程很可能與本次 CTF 題目或可疑活動有關。
+此行程很可能與本次 CTF 題目或可疑活動有關，應列為優先分析目標。
 
-建議後續分析：
+後續建議執行：
 
 ```bash
 .\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 3820
 .\vol.exe -f .\OtterCTF.vmem windows.dlllist.DllList --pid 3820
 .\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3820
-.\vol.exe -f .\OtterCTF.vmem windows.handles.Handles --pid 3820
 ```
 
 ---
 
-### 9.4 WebCompanion 相關行程
+### 8.4 WebCompanion / Lavasoft 相關行程
 
-本次結果中出現多個 WebCompanion / Lavasoft 相關行程：
+本次出現多個 WebCompanion / Lavasoft 相關行程：
 
 ```text
 PID 2844 WebCompanion.e
@@ -363,39 +302,26 @@ PID 3496 Lavasoft.WCAss
 PID 3856 WebCompanion.e
 ```
 
-WebCompanion 通常與 Lavasoft Web Companion 相關。
-它不一定是惡意程式，但常被視為不需要的軟體或潛在不需要程式 PUP。
+WebCompanion 通常與 Lavasoft Web Companion 相關，可能屬於 PUP，也就是潛在不需要程式。
 
-需要注意的是，`WebCompanionIn` 建立後，後續出現多個 `sc.exe`：
+需要注意的是，`WebCompanionIn` 後續啟動了多個 `sc.exe`。
 
-```text
-PID 3208 sc.exe
-PID 452  sc.exe
-PID 3504 sc.exe
-PID 2028 sc.exe
-```
-
-`sc.exe` 是 Windows 服務控制工具，可以用來建立、啟動、停止或刪除 Service。
-
-因此這裡的重點是：
-
-> WebCompanion 相關行程可能透過 `sc.exe` 操作 Windows Service。
-
-建議後續使用 `cmdline` 確認 `sc.exe` 執行了什麼命令。
+這代表 WebCompanion 相關行程可能正在操作 Windows Service。
 
 ---
 
-### 9.5 sc.exe
+### 8.5 sc.exe
 
 ```text
-PID 3208 sc.exe CreateTime 2018-08-04 19:33:47 ExitTime 2018-08-04 19:33:48
-PID 452  sc.exe CreateTime 2018-08-04 19:33:48 ExitTime 2018-08-04 19:33:48
-PID 3504 sc.exe CreateTime 2018-08-04 19:33:48 ExitTime 2018-08-04 19:33:48
-PID 2028 sc.exe CreateTime 2018-08-04 19:33:49 ExitTime 2018-08-04 19:34:03
+PID 3208 sc.exe  CreateTime 2018-08-04 19:33:47  ExitTime 2018-08-04 19:33:48
+PID 452  sc.exe  CreateTime 2018-08-04 19:33:48  ExitTime 2018-08-04 19:33:48
+PID 3504 sc.exe  CreateTime 2018-08-04 19:33:48  ExitTime 2018-08-04 19:33:48
+PID 2028 sc.exe  CreateTime 2018-08-04 19:33:49  ExitTime 2018-08-04 19:34:03
 ```
 
-`sc.exe` 是 Windows 內建服務控制程式。
-它本身是正常工具，但在鑑識分析中非常重要，因為攻擊者或可疑程式可能使用它來：
+`sc.exe` 是 Windows 內建的服務控制工具。
+
+它可以用來：
 
 * 建立服務
 * 啟動服務
@@ -403,25 +329,13 @@ PID 2028 sc.exe CreateTime 2018-08-04 19:33:49 ExitTime 2018-08-04 19:34:03
 * 刪除服務
 * 修改服務設定
 
-本次出現多個短時間執行的 `sc.exe`，而且父行程是：
+本次多個 `sc.exe` 在短時間內出現，而且父行程是 `WebCompanionIn`，因此需要注意是否有服務被建立或修改。
 
-```text
-PPID 3880 WebCompanionIn
-```
-
-這是重要鑑識線索。
-
-建議後續執行：
-
-```bash
-.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine
-```
-
-確認這些 `sc.exe` 是否有執行 `create`、`start`、`delete` 等服務操作。
+後續應使用 `cmdline` 查看 `sc.exe` 的完整命令內容。
 
 ---
 
-### 9.6 cmd.exe 與 conhost.exe
+### 8.6 cmd.exe 與 conhost.exe
 
 ```text
 PID 3916 cmd.exe
@@ -436,79 +350,64 @@ ExitTime   2018-08-04 19:34:22
 ```
 
 `cmd.exe` 是 Windows 命令提示字元。
-`conhost.exe` 是 Console Window Host，通常會與 `cmd.exe` 搭配出現。
 
-本次 `cmd.exe` 與 `conhost.exe` 建立與結束時間都非常接近記憶體擷取時間：
+`conhost.exe` 是 Console Window Host，通常會與 `cmd.exe` 一起出現。
 
-```text
-2018-08-04 19:34:22
-```
-
-這個時間也接近 `windows.info.Info` 中的 SystemTime：
-
-```text
-2018-08-04 19:34:22
-```
-
-代表記憶體擷取時，可能剛好有命令列操作發生。
-
-建議後續用 `cmdline` 確認 `cmd.exe` 的執行內容。
+本次 `cmd.exe` 和 `conhost.exe` 出現在 `2018-08-04 19:34:22`，這個時間非常接近記憶體擷取時間，因此需要進一步確認是否有命令列操作。
 
 ---
 
-## 10. 時間線分析
+## 9. 時間線整理
 
-根據 Process 建立時間，可以整理出以下重要時間線：
+| 時間                  | 事件                               |
+| ------------------- | -------------------------------- |
+| 19:26:03            | System、smss.exe 啟動               |
+| 19:26:10 - 19:26:12 | Windows 核心行程與服務啟動                |
+| 19:27:04            | explorer.exe 啟動                  |
+| 19:27:07            | BitTorrent.exe、WebCompanion.e 啟動 |
+| 19:27:39            | LunarMS.exe 啟動                   |
+| 19:29:30            | chrome.exe 啟動                    |
+| 19:32:55            | Rick And Morty 啟動                |
+| 19:33:07            | WebCompanionIn 啟動                |
+| 19:33:47 - 19:34:03 | 多個 sc.exe 執行                     |
+| 19:34:05            | WebCompanion.e 再次啟動              |
+| 19:34:10            | notepad.exe 啟動                   |
+| 19:34:22            | cmd.exe、conhost.exe 短暫執行         |
 
-| 時間                  | 事件                                 |
-| ------------------- | ---------------------------------- |
-| 19:26:03            | System、smss.exe 啟動                 |
-| 19:26:10 - 19:26:12 | Windows 核心服務與登入相關行程啟動              |
-| 19:27:04            | explorer.exe 啟動                    |
-| 19:27:07            | BitTorrent.exe、WebCompanion.e 啟動   |
-| 19:27:39            | LunarMS.exe 啟動                     |
-| 19:29:30            | chrome.exe 啟動                      |
-| 19:32:55            | Rick And Morty 啟動                  |
-| 19:33:07            | WebCompanionIn 啟動                  |
-| 19:33:47 - 19:34:03 | 多個 sc.exe 執行                       |
-| 19:34:05            | WebCompanion.e 再次啟動                |
-| 19:34:10            | notepad.exe 啟動                     |
-| 19:34:22            | cmd.exe、conhost.exe 短暫執行，接近記憶體擷取時間 |
-
-此時間線顯示，可疑活動主要集中在：
+可疑活動主要集中在：
 
 ```text
 2018-08-04 19:32:55 - 19:34:22
 ```
 
-尤其是 `Rick And Morty`、`WebCompanionIn`、多個 `sc.exe`、`cmd.exe` 與 `notepad.exe`。
+這段時間出現了 `Rick And Morty`、`WebCompanionIn`、多個 `sc.exe`、`notepad.exe` 與 `cmd.exe`。
 
 ---
 
-## 11. 本次 pslist 鑑識重點
+## 10. 本次 PsList 鑑識重點
 
-本次 `pslist` 分析中，最重要的發現如下：
+本次 `pslist` 分析中，重要發現如下：
 
-1. 系統是正常 Windows 7 SP1 開機環境。
+1. 系統行程大致正常。
 2. 記憶體映像檔來自 VMware 虛擬機器環境。
-3. `BitTorrent.exe` 正在執行，可能與可疑檔案下載有關。
-4. `LunarMS.exe` 是非系統常見行程，需要進一步分析。
-5. `Rick And Morty` 是非常可疑的行程名稱，建議列為優先分析目標。
-6. WebCompanion / Lavasoft 相關行程出現，可能為 PUP 或可疑軟體。
-7. 多個 `sc.exe` 短時間執行，可能代表服務操作行為。
-8. `cmd.exe` 與 `conhost.exe` 在記憶體擷取時間附近短暫出現，需要透過 `cmdline` 確認執行內容。
+3. `BitTorrent.exe` 正在執行，可能與下載活動有關。
+4. `LunarMS.exe` 不是 Windows 預設行程，需進一步分析。
+5. `Rick And Morty` 行程名稱可疑，應列為優先分析目標。
+6. WebCompanion / Lavasoft 相關行程出現，可能屬於 PUP。
+7. 多個 `sc.exe` 短時間執行，可能代表服務操作。
+8. `cmd.exe` 在記憶體擷取時間附近短暫出現，需確認命令內容。
 
 ---
 
-## 12. 後續建議分析指令
+## 11. 後續建議分析指令
 
-建議下一步執行 `cmdline`，確認可疑 Process 的完整執行路徑與參數：
+建議下一步先執行 `cmdline`：
 
 ```bash
 .\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine
 ```
 
-若要針對特定 PID，可以使用：
+針對可疑 PID：
 
 ```bash
 .\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 708
@@ -516,13 +415,13 @@ ExitTime   2018-08-04 19:34:22
 .\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 3880
 ```
 
-接著建議分析網路連線：
+接著分析網路連線：
 
 ```bash
 .\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan
 ```
 
-再針對可疑 Process 進行 DLL 與注入分析：
+針對可疑行程做 DLL 與注入分析：
 
 ```bash
 .\vol.exe -f .\OtterCTF.vmem windows.dlllist.DllList --pid 708
@@ -532,25 +431,23 @@ ExitTime   2018-08-04 19:34:22
 .\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3820
 ```
 
-也建議分析服務資訊：
+因為本次有多個 `sc.exe`，也建議分析服務：
 
 ```bash
 .\vol.exe -f .\OtterCTF.vmem windows.svcscan.SvcScan
 ```
 
-因為本次出現多個 `sc.exe`，可能與服務建立或修改有關。
-
 ---
 
-## 13. 報告用結論
+## 12. 報告用結論
 
 本次使用 Volatility 3 的 `windows.pslist.PsList` Plugin 分析 `OtterCTF.vmem`，成功列出記憶體映像檔中的行程資訊。
 
-分析結果顯示，系統中存在多個正常 Windows 系統行程，例如 `System`、`smss.exe`、`csrss.exe`、`wininit.exe`、`services.exe`、`lsass.exe` 與多個 `svchost.exe`。此外，也可以看到 VMware 相關行程，例如 `vmtoolsd.exe`、`vmacthlp.exe` 與 `vmware-tray.exe`，代表此記憶體映像檔應來自 VMware 虛擬機器環境。
+分析結果顯示，系統中存在多個正常 Windows 系統行程，例如 `System`、`smss.exe`、`csrss.exe`、`wininit.exe`、`services.exe`、`lsass.exe` 與多個 `svchost.exe`。同時也發現 VMware 相關行程，例如 `vmtoolsd.exe`、`vmacthlp.exe` 與 `vmware-tray.exe`，代表此記憶體映像檔來自 VMware 虛擬機器環境。
 
-在可疑行程方面，本次發現 `BitTorrent.exe`、`LunarMS.exe`、`Rick And Morty`、`WebCompanion` 相關行程，以及多個短時間執行的 `sc.exe`。其中，`Rick And Morty` 與 `LunarMS.exe` 不是 Windows 預設行程，且由使用者層的 `explorer.exe` 啟動，因此需要列為後續分析重點。
+在可疑行程方面，本次發現 `BitTorrent.exe`、`LunarMS.exe`、`Rick And Morty`、WebCompanion 相關行程，以及多個短時間執行的 `sc.exe`。其中 `Rick And Morty` 與 `LunarMS.exe` 不是 Windows 預設行程，且由使用者層的 `explorer.exe` 啟動，因此需要列為後續分析重點。
 
-另外，多個 `sc.exe` 由 `WebCompanionIn` 啟動，且在短時間內建立與結束，可能代表有服務建立、修改或刪除行為。最後，`cmd.exe` 與 `conhost.exe` 在記憶體擷取時間附近短暫出現，需透過 `cmdline` 進一步確認其執行內容。
+另外，多個 `sc.exe` 由 `WebCompanionIn` 啟動，可能代表服務建立、修改或刪除行為。`cmd.exe` 與 `conhost.exe` 則在記憶體擷取時間附近短暫出現，需要透過 `cmdline` 進一步確認執行內容。
 
 綜合判斷，本次 `pslist` 的主要可疑目標為：
 
@@ -567,7 +464,7 @@ cmd.exe
 
 ---
 
-## 14. 簡短結論
+## 13. 簡短結論
 
 `windows.pslist.PsList` 成功列出系統行程，確認此記憶體映像檔可正常進行行程分析。
 
