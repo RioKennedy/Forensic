@@ -164,3 +164,165 @@ Offset  Base    Size    Name    Path    File output
 0xfa801af3ef20  0xf88004a0d000  0x99000 srv.sys \SystemRoot\System32\DRIVERS\srv.sys    Disabled
 0xfa801aed8160  0xf88004aa6000  0x71000 spsys.sys       \SystemRoot\system32\drivers\spsys.sys  Disabled
 ```
+
+# windows.modules.Modules 分析
+
+## 1. Plugin 功能說明
+
+`windows.modules.Modules` 用來列出系統核心層級已載入的 Kernel Modules，也就是 Windows Kernel 與 Driver。
+
+此 Plugin 主要可以看：
+
+* 系統核心檔案，例如 `ntoskrnl.exe`
+* Windows 內建 Driver，例如 `tcpip.sys`、`Ntfs.sys`
+* 第三方 Driver，例如 VMware Tools 相關驅動
+* 是否有可疑或陌生的 Kernel Driver 被載入
+
+---
+
+## 2. 分析重點
+
+本次結果大致可以分成三類：
+
+| 類別                | 範例                                                             | 判斷           |
+| ----------------- | -------------------------------------------------------------- | ------------ |
+| Windows 核心模組      | `ntoskrnl.exe`、`hal.dll`                                       | 正常           |
+| Windows 系統 Driver | `tcpip.sys`、`Ntfs.sys`、`ndis.sys`、`afd.sys`                    | 正常           |
+| VMware 相關 Driver  | `vmci.sys`、`vsock.sys`、`vmhgfs.sys`、`vmmouse.sys`、`vm3dmp.sys` | 符合 VMware 環境 |
+
+---
+
+## 3. 重要結果分析
+
+### 3.1 Windows 核心模組
+
+結果中可看到：
+
+```text
+ntoskrnl.exe
+hal.dll
+kdcom.dll
+```
+
+這些是 Windows 開機與核心運作必要模組，屬於正常項目。
+
+---
+
+### 3.2 檔案系統與磁碟 Driver
+
+結果中出現：
+
+```text
+Ntfs.sys
+fltmgr.sys
+disk.sys
+CLASSPNP.SYS
+volmgr.sys
+volsnap.sys
+```
+
+這些與檔案系統、磁碟、磁碟區管理有關，屬於 Windows 正常 Driver。
+
+---
+
+### 3.3 網路相關 Driver
+
+結果中出現：
+
+```text
+tcpip.sys
+ndis.sys
+NETIO.SYS
+afd.sys
+netbt.sys
+HTTP.sys
+```
+
+這些是 Windows 網路功能相關 Driver，屬於正常項目。
+
+後續如果要分析網路連線，應搭配：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan
+```
+
+---
+
+### 3.4 VMware 相關 Driver
+
+本次結果中有多個 VMware 相關 Driver：
+
+```text
+vmci.sys
+vsock.sys
+vmstorfl.sys
+vmrawdsk.sys
+vmhgfs.sys
+vmmouse.sys
+vm3dmp.sys
+vmusbmouse.sys
+vmmemctl.sys
+```
+
+這些 Driver 與 VMware Tools 或 VMware 虛擬化環境相符。
+
+因此可以判斷此記憶體映像確實來自 VMware 虛擬機環境。
+
+---
+
+## 4. 可疑項目判斷
+
+本次 `modules` 結果中，沒有看到明顯可疑或陌生的 Kernel Driver。
+
+比較需要注意的是：
+
+| Driver         | 判斷                              |
+| -------------- | ------------------------------- |
+| `vmci.sys`     | VMware 相關，正常                    |
+| `vsock.sys`    | VMware 相關，正常                    |
+| `vmhgfs.sys`   | VMware shared folders 相關，正常     |
+| `vm3dmp.sys`   | VMware display driver，正常        |
+| `vmmemctl.sys` | VMware memory control driver，正常 |
+| `secdrv.SYS`   | Windows 舊式驅動，需注意但不一定惡意          |
+
+其中 `secdrv.SYS` 是舊版 Windows 常見的 SafeDisc 相關 Driver，本身不一定代表惡意，但可以簡單記錄。
+
+---
+
+## 5. 鑑識判斷
+
+本次 `windows.modules.Modules` 的主要價值是確認 Kernel / Driver 層級狀態。
+
+分析結果顯示：
+
+```text
+1. 系統核心模組正常
+2. Windows 檔案系統、網路、磁碟 Driver 正常
+3. VMware 相關 Driver 大量存在，符合虛擬機環境
+4. 沒有看到明顯陌生或可疑的 Kernel Driver
+```
+
+因此，目前沒有明顯證據顯示攻擊者載入了 Kernel Rootkit 或可疑 Driver。
+
+本案可疑重點仍然比較集中在 User Mode Process：
+
+```text
+Rick And Morty season 1 download.exe
+Temp\RarSFX0\vmware-tray.exe
+```
+
+---
+
+## 6. 結論
+
+`windows.modules.Modules` 結果顯示，系統中載入的 Kernel Modules 大多屬於 Windows 內建 Driver 與 VMware 相關 Driver。
+
+本次沒有發現明顯異常的 Kernel Driver 或 Rootkit 類模組。
+
+因此，從 `modules` 結果來看，核心層級暫時沒有明顯可疑跡象。後續分析應繼續聚焦在 User Mode 的可疑程式，例如：
+
+```text
+PID 3820 - Rick And Morty
+PID 3720 - vmware-tray.exe
+```
+
