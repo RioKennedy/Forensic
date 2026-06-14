@@ -395,6 +395,12 @@ D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.ne
 
 `PID 4076 chrome.exe` 有多筆 UDP 連線，例如：
 
+```text
+0.0.0.0:50762
+0.0.0.0:65452
+0.0.0.0:5353
+```
+
 ```
 D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.netscan.NetScan | findstr 4076
 0x7d6424c0 100.0UDPv4   0.0.0.0 50762can*ing fin0shed           4076    chrome.exe      2018-08-04 19:33:37.000000
@@ -412,11 +418,7 @@ D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.ne
 
 ```
 
-```text
-0.0.0.0:50762
-0.0.0.0:65452
-0.0.0.0:5353
-```
+
 
 ### 分析判斷
 
