@@ -199,31 +199,7 @@ cmd.exe → ipconfig.exe
 
 ---
 
-## 8. 時間線整理
-
-| 時間                  | 事件                                 |
-| ------------------- | ---------------------------------- |
-| 19:27:07            | BitTorrent.exe 與 WebCompanion.e 啟動 |
-| 19:27:39            | LunarMS.exe 啟動                     |
-| 19:32:55            | Rick And Morty 啟動                  |
-| 19:33:07            | WebCompanionIn 啟動                  |
-| 19:33:47 - 19:34:03 | 多個 `sc.exe` 被 WebCompanionIn 啟動    |
-| 19:34:05            | WebCompanion.e 再次啟動                |
-| 19:34:10            | notepad.exe 啟動                     |
-| 19:34:22            | cmd.exe 啟動                         |
-| 19:34:22            | ipconfig.exe 由 cmd.exe 啟動          |
-| 19:34:22            | conhost.exe 出現                     |
-| 19:34:22            | 記憶體擷取時間附近                          |
-
-可疑活動主要集中在：
-
-```text
-2018-08-04 19:32:55 - 19:34:22
-```
-
----
-
-## 9. psscan 與 pslist 交叉分析
+## . psscan 與 pslist 交叉分析
 
 本次 `psscan` 與前面的 `pslist` 結果大致一致。
 
