@@ -335,6 +335,13 @@ PID 452  sc.exe  CreateTime 2018-08-04 19:33:48  ExitTime 2018-08-04 19:33:48
 PID 3504 sc.exe  CreateTime 2018-08-04 19:33:48  ExitTime 2018-08-04 19:33:48
 PID 2028 sc.exe  CreateTime 2018-08-04 19:33:49  ExitTime 2018-08-04 19:34:03
 ```
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.pslist.PsList | findstr sc.exe
+3208ress388000.0sc.exe  0xfa801b08f060an0ing fin-shed   0       False   2018-08-04 19:33:47.000000      2018-08-04 19:33:48.000000      Disabled
+452     3880    sc.exe  0xfa801aeb6890  0       -       0       False   2018-08-04 19:33:48.000000      2018-08-04 19:33:48.000000      Disabled
+3504    3880    sc.exe  0xfa801aa72b30  0       -       0       False   2018-08-04 19:33:48.000000      2018-08-04 19:33:48.000000      Disabled
+2028    3880    sc.exe  0xfa801ac01060  0       -       0       False   2018-08-04 19:33:49.000000      2018-08-04 19:34:03.000000      Disabled
+```
 
 `sc.exe` 是 Windows 內建的服務控制工具。
 
