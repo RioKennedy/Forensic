@@ -236,6 +236,13 @@ PID 2308 bittorrentie.e
 PID 2624 bittorrentie.e
 ```
 
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.pslist.PsList | findstr 2836
+2836ress272800.0BitTorrent.exe  0xfa801b290b30in24hed   471     1       True    2018-08-04 19:27:07.000000      N/A    Disabled
+2308    2836    bittorrentie.e  0xfa801b4a7b30  15      337     1       True    2018-08-04 19:27:19.000000      N/A    Disabled
+2624    2836    bittorrentie.e  0xfa801b4c9b30  13      316     1       True    2018-08-04 19:27:21.000000      N/A    Disabled
+```
+
 後續應搭配 `cmdline` 與 `netscan` 檢查 BitTorrent 的執行路徑與網路連線。
 
 ---
