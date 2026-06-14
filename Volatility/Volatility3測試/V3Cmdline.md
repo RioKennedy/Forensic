@@ -165,7 +165,12 @@ BitTorrent.exe
 bittorrentie.exe
 bittorrentie.exe
 ```
-
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine | findstr BitTorrent
+2836ressBitTorrent.exe  "C:\Users\Rick\AppData\Roaming\BitTorrent\BitTorrent.exe"  /MINIMIZED
+2308    bittorrentie.e  "C:\Users\Rick\AppData\Roaming\BitTorrent\updates\7.10.3_44495\bittorrentie.exe" BitTorrent_2836_00313D08_590648902 BT4823DF041B09 BitTorrent
+2624    bittorrentie.e  "C:\Users\Rick\AppData\Roaming\BitTorrent\updates\7.10.3_44495\bittorrentie.exe" BitTorrent_2836_00313978_1933444659 BT4823DF041B09 BitTorrent
+```
 這代表主機可能有 P2P 下載活動。
 
 搭配 `Rick And Morty season 1 download.exe` 的路徑，可以推測可疑檔案可能與 torrent 下載有關。
