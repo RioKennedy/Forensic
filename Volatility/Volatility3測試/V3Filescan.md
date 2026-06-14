@@ -302,39 +302,3 @@ Dump `Rick And Morty season 1 download.exe`：
 ```bash
 .\vol.exe -f .\OtterCTF.vmem -o dump windows.dumpfiles.DumpFiles --virtaddr 0x7d63dbc0
 ```
-
----
-
-## 9. 鑑識判斷
-
-本次 `FileScan` 結果確認了三個重要方向：
-
-```text
-1. 使用者 Rick 曾開啟 Flag.txt.WINDOWS
-2. Rick 桌面存在 READ_IT.txt
-3. 可疑檔案 Rick And Morty season 1 download.exe 位於 Torrents 目錄
-```
-
-結合前面分析，`Rick And Morty season 1 download.exe` 可能是透過 BitTorrent 下載後執行，並進一步啟動或釋放可疑的 `vmware-tray.exe`。
-
----
-
-## 10. 結論
-
-`windows.filescan.FileScan` 結果顯示，本案的重要檔案集中在 Rick 使用者目錄與 Torrents 目錄。
-
-其中 `\Torrents\Rick And Morty season 1 download.exe` 是主要可疑執行檔，檔名偽裝成影片下載但實際為 `.exe`。
-
-`Flag.txt.WINDOWS.lnk` 顯示使用者曾開啟 Flag 相關檔案，而 `READ_IT.txt` 可能是提示或攻擊留下的文字檔。
-
-因此，本次 `FileScan` 支持以下攻擊鏈：
-
-```text
-BitTorrent 下載活動
-↓
-\Torrents\Rick And Morty season 1 download.exe
-↓
-執行可疑程式
-↓
-產生 / 啟動後續可疑檔案與 Flag 相關痕跡
-```
