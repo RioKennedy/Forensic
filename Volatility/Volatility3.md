@@ -50,11 +50,11 @@ vol.exe -f memory.vmem windows.cmdline.CmdLine
 
 | Plugin | 功能說明 | 用途 |
 |---|---|---|
-| `windows.dlllist.DllList` | 列出行程載入的 DLL | 查看行程載入哪些模組 |
-| `windows.ldrmodules.LdrModules` | 比對載入模組資訊 | 找 DLL Injection、Unlinked DLL |
-| `windows.verinfo.VerInfo` | 顯示 PE 檔版本資訊 | 判斷檔案公司、版本、可疑 PE |
-| `windows.modules.Modules` | 列出 Kernel module | 查看核心模組 |
-| `windows.modscan.ModScan` | 掃描記憶體中的模組 | 找隱藏 Kernel module |
+| [`windows.dlllist.DllList`](Volatility3測試/V3Pslist.md) | 列出行程載入的 DLL | 查看行程載入哪些模組 |
+| [`windows.ldrmodules.LdrModules`](Volatility3測試/V3Pslist.md) | 比對載入模組資訊 | 找 DLL Injection、Unlinked DLL |
+| [`windows.verinfo.VerInfo`](Volatility3測試/V3Pslist.md) | 顯示 PE 檔版本資訊 | 判斷檔案公司、版本、可疑 PE |
+| [`windows.modules.Modules`](Volatility3測試/V3Pslist.md) | 列出 Kernel module | 查看核心模組 |
+| [`windows.modscan.ModScan`](Volatility3測試/V3Pslist.md) | 掃描記憶體中的模組 | 找隱藏 Kernel module |
 
 ### 常用指令
 
