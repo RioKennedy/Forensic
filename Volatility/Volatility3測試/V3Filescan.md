@@ -207,6 +207,10 @@ READ_IT.txt 是需要優先 dump 的重要文字檔。
 ```text
 0x7d63dbc0  \Torrents\Rick And Morty season 1 download.exe
 ```
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.filescan.FileScan | findstr 0x7d63dbc0
+0x7d63dbc0 100.0\Torrents\Rick And Morty season 1 download.exe  216
+```
 
 ### 分析
 
