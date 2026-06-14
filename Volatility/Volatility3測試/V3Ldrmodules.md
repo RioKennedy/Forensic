@@ -460,3 +460,310 @@ Pid     Process Base    InLoad  InInit  InMem   MappedPath
 3856    WebCompanion.e  0x776f0000      True    True    True    \Windows\System32\ntdll.dll
 3856    WebCompanion.e  0x778a0000      False   False   False   \Windows\SysWOW64\msasn1.dll
 ```
+
+# windows.ldrmodules.LdrModules 分析
+
+## 1. 執行指令
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.ldrmodules.LdrModules --pid 3820
+.\vol.exe -f .\OtterCTF.vmem windows.ldrmodules.LdrModules --pid 3720
+.\vol.exe -f .\OtterCTF.vmem windows.ldrmodules.LdrModules --pid 708
+.\vol.exe -f .\OtterCTF.vmem windows.ldrmodules.LdrModules --pid 3880
+.\vol.exe -f .\OtterCTF.vmem windows.ldrmodules.LdrModules --pid 3856
+```
+
+---
+
+## 2. Plugin 功能簡述
+
+`windows.ldrmodules.LdrModules` 用來檢查 Process 中載入模組是否存在於不同的 Loader List。
+
+主要觀察欄位：
+
+| 欄位           | 說明                              |
+| ------------ | ------------------------------- |
+| `InLoad`     | 是否出現在 Load Order List           |
+| `InInit`     | 是否出現在 Initialization Order List |
+| `InMem`      | 是否出現在 Memory Order List         |
+| `MappedPath` | 模組路徑                            |
+
+如果模組出現 `False False False`，代表它不在一般 Loader List 中，但仍被記憶體掃描到，需要進一步判斷是否正常或可疑。
+
+---
+
+## 3. 結果重點整理
+
+|  PID | Process                     | 重要發現                                                    | 判斷                |
+| ---: | --------------------------- | ------------------------------------------------------- | ----------------- |
+| 3820 | `Rick And Morty`            | 主程式為 `C:\Torrents\Rick And Morty season 1 download.exe` | 高度可疑              |
+| 3720 | `vmware-tray.exe`           | 從 `Temp\RarSFX0` 執行，並載入 .NET 模組                         | 可疑子行程             |
+|  708 | `LunarMS.exe`               | 載入多個 `C:\Users\Rick\AppData\Local\Temp\nst*.tmp`        | 需要注意              |
+| 3880 | `WebCompanionInstaller.exe` | 載入 WebCompanion、.NET、WMI、壓縮相關模組                         | 安裝/更新行為           |
+| 3856 | `WebCompanion.exe`          | 載入多個 Lavasoft 模組                                        | WebCompanion 程式行為 |
+
+---
+
+## 4. 關鍵發現
+
+### 4.1 Rick And Morty
+
+```text
+3820 Rick And Morty
+\Torrents\Rick And Morty season 1 download.exe
+```
+
+重點：
+
+* 主程式仍確認為 torrent 下載目錄中的 `.exe`
+* 檔名偽裝成影片下載
+* 載入多個 Windows 32-bit 系統 DLL
+* 沒看到明顯第三方可疑 DLL，但主程式本身已高度可疑
+
+判斷：
+
+```text
+Rick And Morty season 1 download.exe 仍是本次最高優先分析目標。
+```
+
+---
+
+### 4.2 vmware-tray.exe
+
+```text
+3720 vmware-tray.ex
+\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
+```
+
+重點：
+
+* 路徑位於 `Temp\RarSFX0`
+* 不屬於正常 VMware Tools 安裝路徑
+* 載入多個 .NET Framework 模組，例如 `clr.dll`、`mscoree.dll`、`System.Windows.Forms`
+* 與前面 `pstree`、`joblinks` 結果相符
+
+判斷：
+
+```text
+vmware-tray.exe 很可能是 Rick And Morty 釋放或啟動的可疑子程式。
+```
+
+---
+
+### 4.3 LunarMS.exe
+
+```text
+708 LunarMS.exe
+\Nexon\MapleStory\LunarMS.exe
+```
+
+重點：
+
+* 主要路徑屬於 MapleStory 相關目錄
+* 載入多個遊戲相關 DLL，例如 `Canvas.dll`、`PCOM.dll`、`Sound_DX8.dll`
+* 但同時出現多個 Temp `.tmp` 模組：
+
+```text
+\Users\Rick\AppData\Local\Temp\nstB3C5.tmp
+\Users\Rick\AppData\Local\Temp\nstB41B.tmp
+\Users\Rick\AppData\Local\Temp\nstB3F8.tmp
+\Users\Rick\AppData\Local\Temp\nstB409.tmp
+\Users\Rick\AppData\Local\Temp\nstB40A.tmp
+\Users\Rick\AppData\Local\Temp\nstB3F9.tmp
+\Users\Rick\AppData\Local\Temp\nstB3E6.tmp
+\Users\Rick\AppData\Local\Temp\nstB3F7.tmp
+\Users\Rick\AppData\Local\Temp\nstB3D5.tmp
+\Users\Rick\AppData\Local\Temp\nstB395.tmp
+```
+
+判斷：
+
+```text
+LunarMS.exe 可能是遊戲程式，但載入多個 Temp .tmp 模組，建議用 malfind 補充確認。
+```
+
+---
+
+### 4.4 WebCompanionInstaller.exe
+
+```text
+3880 WebCompanionIn
+\Program Files (x86)\Lavasoft\Web Companion\Application\WebCompanionInstaller.exe
+```
+
+重點：
+
+* 載入 .NET Framework v2.0 相關模組
+* 載入 WMI 相關模組，例如 `wbemprox.dll`、`wbemsvc.dll`、`fastprox.dll`
+* 載入 `ICSharpCode.SharpZipLib.dll`
+* 前面已觀察到它啟動多個 `sc.exe`
+
+判斷：
+
+```text
+WebCompanionInstaller.exe 可能正在進行安裝、更新、解壓縮或服務操作。
+```
+
+---
+
+### 4.5 WebCompanion.exe
+
+```text
+3856 WebCompanion.e
+\Program Files (x86)\Lavasoft\Web Companion\Application\WebCompanion.exe
+```
+
+重點：
+
+* 載入多個 Lavasoft 模組：
+
+```text
+Lavasoft.AppCore.dll
+Lavasoft.Utils.dll
+Lavasoft.SearchProtect.Business.dll
+log4net.dll
+Newtonsoft.Json.dll
+```
+
+判斷：
+
+```text
+WebCompanion.exe 行為符合 WebCompanion 程式本身，但仍與服務操作線索相關。
+```
+
+---
+
+## 5. InLoad / InInit / InMem 判斷
+
+本次有許多模組顯示：
+
+```text
+False False False
+```
+
+這不一定全部代表惡意。
+
+在這次結果中，多數 `False False False` 是：
+
+* Windows 系統 DLL
+* MUI 語言資源檔
+* .NET Native Image
+* AppPatch 相容性 DLL
+* WebCompanion 自身模組
+* MapleStory 遊戲相關 DLL
+
+真正需要注意的是路徑異常的模組，例如：
+
+```text
+\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
+\Users\Rick\AppData\Local\Temp\nst*.tmp
+```
+
+---
+
+## 6. 鑑識判斷
+
+本次 `ldrmodules` 補強三個重點：
+
+```text
+Rick And Morty → vmware-tray.exe 的可疑執行鏈成立
+```
+
+```text
+vmware-tray.exe 從 Temp\RarSFX0 執行，且使用 .NET 模組
+```
+
+```text
+LunarMS.exe 雖然像遊戲程式，但載入多個 Temp .tmp 模組，需要補充檢查
+```
+
+因此，後續優先順序應為：
+
+| 優先 |  PID | Process                     | 原因                 |
+| -: | ---: | --------------------------- | ------------------ |
+|  1 | 3820 | `Rick And Morty`            | 主可疑 EXE            |
+|  2 | 3720 | `vmware-tray.exe`           | 可疑子行程              |
+|  3 |  708 | `LunarMS.exe`               | 有多個 Temp `.tmp` 模組 |
+|  4 | 3880 | `WebCompanionInstaller.exe` | 服務操作線索             |
+|  5 | 3856 | `WebCompanion.exe`          | WebCompanion 相關    |
+
+---
+
+## 7. 後續建議
+
+優先執行 `malfind`：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3820
+.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3720
+.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 708
+```
+
+針對 `LunarMS.exe` 的 Temp 模組，可再用 `vadinfo` 補充：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.vadinfo.VadInfo --pid 708
+```
+
+針對 WebCompanion 服務操作：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.svcscan.SvcScan
+```
+
+---
+
+## 8. 報告用結論
+
+本次使用 `windows.ldrmodules.LdrModules` 分析可疑 Process 的模組載入情況。
+
+結果顯示，`Rick And Morty` 的主程式仍確認為：
+
+```text
+\Torrents\Rick And Morty season 1 download.exe
+```
+
+其子行程 `vmware-tray.exe` 則位於：
+
+```text
+\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
+```
+
+這與前面 `pstree`、`cmdline`、`sessions`、`joblinks` 的結果一致，進一步確認兩者屬於同一條可疑執行鏈。
+
+另外，`LunarMS.exe` 雖然位於 MapleStory 目錄，但載入了多個 `C:\Users\Rick\AppData\Local\Temp\nst*.tmp` 模組，因此仍需進一步用 `malfind` 或 `vadinfo` 檢查是否存在可疑記憶體區段。
+
+WebCompanion 相關行程則載入多個 .NET、WMI、Lavasoft 與壓縮相關模組，符合安裝或更新行為，也與前面觀察到的 `sc.exe` 服務操作線索相符。
+
+---
+
+## 9. 簡短結論
+
+本次 `ldrmodules` 最重要的發現：
+
+```text
+Rick And Morty → vmware-tray.exe
+```
+
+可疑路徑：
+
+```text
+\Torrents\Rick And Morty season 1 download.exe
+\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
+```
+
+另外需注意：
+
+```text
+LunarMS.exe → \Users\Rick\AppData\Local\Temp\nst*.tmp
+WebCompanionInstaller.exe → WMI / .NET / SharpZipLib
+```
+
+下一步建議優先分析：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3820
+.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 3720
+.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind --pid 708
+```
+
