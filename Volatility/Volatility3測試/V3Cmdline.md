@@ -126,6 +126,14 @@ PID 3820
 Process: Rick And Morty
 Path: C:\Torrents\Rick And Morty season 1 download.exe
 ```
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.cmdline.CmdLine --pid 3820
+Volatility 3 Framework 2.5.0
+Progress:  100.00               PDB scanning finished
+PID     Process Args
+
+3820    Rick And Morty  "C:\Torrents\Rick And Morty season 1 download.exe"
+```
 
 這是本次 `cmdline` 最重要的發現。
 
