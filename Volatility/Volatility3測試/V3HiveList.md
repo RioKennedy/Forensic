@@ -27,11 +27,11 @@ Offset  FileFullPath    File output
 
 ## 1. Plugin 功能說明
 
-`windows.registry.hivelist.HiveList` 用來列出記憶體中載入的 Windows Registry Hive。
+`windows.registry.hivelist.HiveList` 用來列出記憶體中已載入的 Windows Registry Hive。
 
-Registry Hive 是 Windows 系統的重要設定資料庫，包含系統設定、使用者設定、服務資訊、帳號資訊，以及使用者操作痕跡。
+Registry Hive 是 Windows 登錄檔的主要資料庫，裡面可能包含系統設定、使用者設定、帳號資訊、服務設定、軟體資訊，以及使用者操作紀錄。
 
-此 Plugin 可協助確認系統中有哪些 Registry Hive 被載入，並找出後續 Registry 分析所需的 Hive 路徑。
+在數位鑑識中，`HiveList` 主要用來確認目前系統中有哪些 Registry Hive 被載入，並找出後續分析 Registry 所需要的 Hive 路徑。
 
 ---
 
@@ -43,83 +43,134 @@ Registry Hive 是 Windows 系統的重要設定資料庫，包含系統設定、
 
 ---
 
-## 3. 執行結果重點
+## 3. 欄位說明
 
-本次掃描發現多個 Registry Hive，包含：
+| 欄位             | 說明                                                                       |
+| -------------- | ------------------------------------------------------------------------ |
+| `Offset`       | Registry Hive 在記憶體中的位置，可作為識別該 Hive 的參考。                                  |
+| `FileFullPath` | Registry Hive 對應的完整路徑，可判斷該 Hive 屬於系統或使用者。                                |
+| `File output`  | 是否有將 Hive 匯出成檔案。若顯示 `Disabled`，代表本次只是列出 Hive，沒有 dump 出 Registry Hive 檔案。 |
+
+---
+
+## 4. 執行結果
+
+本次執行結果如下：
 
 ```text
-\REGISTRY\MACHINE\SYSTEM
-\REGISTRY\MACHINE\HARDWARE
-\SystemRoot\System32\Config\SECURITY
-\SystemRoot\System32\Config\SOFTWARE
-\SystemRoot\System32\Config\DEFAULT
-\SystemRoot\System32\Config\SAM
-\??\C:\Users\Rick\ntuser.dat
-\??\C:\Users\Rick\AppData\Local\Microsoft\Windows\UsrClass.dat
-\??\C:\System Volume Information\Syscache.hve
+Offset          FileFullPath                                                    File output
+
+0xf8a00000f010                                                                  Disabled
+0xf8a000024010  \REGISTRY\MACHINE\SYSTEM                                        Disabled
+0xf8a000053320  \REGISTRY\MACHINE\HARDWARE                                      Disabled
+0xf8a000109410  \SystemRoot\System32\Config\SECURITY                            Disabled
+0xf8a00033d410  \Device\HarddiskVolume1\Boot\BCD                                Disabled
+0xf8a0005d5010  \SystemRoot\System32\Config\SOFTWARE                            Disabled
+0xf8a001495010  \SystemRoot\System32\Config\DEFAULT                             Disabled
+0xf8a0016d4010  \SystemRoot\System32\Config\SAM                                 Disabled
+0xf8a00175b010  \??\C:\Windows\ServiceProfiles\NetworkService\NTUSER.DAT        Disabled
+0xf8a00176e410  \??\C:\Windows\ServiceProfiles\LocalService\NTUSER.DAT          Disabled
+0xf8a002090010  \??\C:\Users\Rick\ntuser.dat                                    Disabled
+0xf8a0020ad410  \??\C:\Users\Rick\AppData\Local\Microsoft\Windows\UsrClass.dat  Disabled
+0xf8a00377d2d0  \??\C:\System Volume Information\Syscache.hve                   Disabled
 ```
 
-其中最重要的是：
+---
+
+## 5. 重要 Hive 說明
+
+| Hive                                                         | 說明                                         |
+| ------------------------------------------------------------ | ------------------------------------------ |
+| `\REGISTRY\MACHINE\SYSTEM`                                   | 系統設定、控制集、服務與開機相關設定。                        |
+| `\REGISTRY\MACHINE\HARDWARE`                                 | 硬體相關資訊。                                    |
+| `\SystemRoot\System32\Config\SECURITY`                       | 系統安全性設定與原則。                                |
+| `\SystemRoot\System32\Config\SOFTWARE`                       | 已安裝軟體與系統軟體設定。                              |
+| `\SystemRoot\System32\Config\SAM`                            | 本機帳號與使用者資訊。                                |
+| `\SystemRoot\System32\Config\DEFAULT`                        | 預設使用者設定。                                   |
+| `C:\Users\Rick\ntuser.dat`                                   | Rick 使用者個人 Registry Hive，可能包含使用者執行程式與操作紀錄。 |
+| `C:\Users\Rick\AppData\Local\Microsoft\Windows\UsrClass.dat` | Rick 使用者 Shell、檔案總管、捷徑與使用者介面相關紀錄。          |
+| `Syscache.hve`                                               | 系統快取 Hive，可能包含程式執行或檔案相關快取資訊。               |
+| `Boot\BCD`                                                   | Windows 開機設定資料。                            |
+
+---
+
+## 6. 本案重點 Hive
+
+本案最重要的是 Rick 使用者相關 Hive：
 
 ```text
 0xf8a002090010  \??\C:\Users\Rick\ntuser.dat
 0xf8a0020ad410  \??\C:\Users\Rick\AppData\Local\Microsoft\Windows\UsrClass.dat
 ```
 
+原因是前面分析已經發現多個與 Rick 使用者相關的可疑路徑：
+
+```text
+C:\Users\Rick\
+C:\Torrents\Rick And Morty season 1 download.exe
+C:\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
+C:\Users\Rick\Desktop\READ_IT.txt
+C:\Users\Rick\AppData\Roaming\Microsoft\Windows\Recent\Flag.txt.WINDOWS.lnk
+```
+
+因此，Rick 的 `ntuser.dat` 與 `UsrClass.dat` 可能包含後續分析所需的使用者操作紀錄。
+
 ---
 
-## 4. 重要 Hive 分析
+## 7. File output 欄位分析
 
-| Hive                | 用途                            |
-| ------------------- | ----------------------------- |
-| `SYSTEM`            | 系統服務、控制集、硬體與開機設定              |
-| `SOFTWARE`          | 已安裝軟體、Windows 系統軟體設定          |
-| `SAM`               | 本機帳號資訊                        |
-| `SECURITY`          | 安全性原則與憑證相關資訊                  |
-| `Rick\ntuser.dat`   | Rick 使用者個人 Registry 設定與操作紀錄   |
-| `Rick\UsrClass.dat` | Rick 使用者 Shell、檔案總管與使用者介面相關紀錄 |
+本次結果中的 `File output` 都顯示為：
+
+```text
+Disabled
+```
+
+這代表本次執行 `HiveList` 時，Volatility 只是列出 Registry Hive，並沒有將 Hive 匯出成檔案。
+
+這不是錯誤，也不影響本次分析。
+
+如果後續需要匯出 Registry Hive，再另外使用 dump 相關參數或其他 Registry 分析工具處理。
 
 ---
 
-## 5. 鑑識判斷
+## 8. 鑑識判斷
 
-本次 `HiveList` 確認系統中存在使用者 `Rick` 的 Registry Hive：
+`HiveList` 結果確認系統中存在 Rick 使用者的 Registry Hive。
+
+這對本案很重要，因為 Rick 使用者是目前主要的使用者環境，而可疑檔案與加密提示檔也都與 Rick 的使用者路徑有關。
+
+可疑事件關聯如下：
+
+```text
+Rick 使用者環境
+↓
+BitTorrent 下載活動
+↓
+Rick And Morty season 1 download.exe
+↓
+Temp\RarSFX0\vmware-tray.exe
+↓
+桌面出現 READ_IT.txt
+↓
+檔案加密訊息出現
+```
+
+因此，Rick 的 Registry Hive 可以作為後續確認使用者執行紀錄的重要來源。
+
+---
+
+## 9. 結論
+
+`windows.registry.hivelist.HiveList` 成功列出記憶體中的 Windows Registry Hive。
+
+本次最重要的發現是：
 
 ```text
 \??\C:\Users\Rick\ntuser.dat
 \??\C:\Users\Rick\AppData\Local\Microsoft\Windows\UsrClass.dat
 ```
 
-這與前面發現的可疑檔案路徑一致：
+這兩個 Hive 與 Rick 使用者的操作紀錄有關，可用於後續分析使用者是否曾執行可疑程式、開啟捷徑或存取相關檔案。
 
-```text
-C:\Users\Rick\
-C:\Torrents\
-C:\Users\Rick\AppData\Local\Temp\RarSFX0\
-```
+因此，下一步應使用 `windows.registry.userassist.UserAssist` 進一步分析 Rick 使用者的程式執行紀錄。
 
-因此，後續可針對 Rick 使用者 Registry 進行分析，以確認是否有程式執行紀錄、近期檔案開啟紀錄或使用者操作痕跡。
-
----
-
-## 6. File output 欄位說明
-
-本次結果中的 `File output` 顯示為：
-
-```text
-Disabled
-```
-
-這代表本次只是列出 Hive，沒有將 Registry Hive dump 成檔案。
-
-這不是錯誤，不影響 `HiveList` 的分析結果。
-
----
-
-## 7. 結論
-
-`windows.registry.hivelist.HiveList` 成功列出系統與使用者 Registry Hive。
-
-其中 `C:\Users\Rick\ntuser.dat` 與 `UsrClass.dat` 是後續分析的重點，因為它們可能包含 Rick 使用者執行程式與操作檔案的紀錄。
-
-下一步應針對 `UserAssist` 進行分析，以確認可疑程式是否曾被 Rick 使用者執行。
