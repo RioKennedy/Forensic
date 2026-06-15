@@ -1095,6 +1095,10 @@ UserAssist 也發現：
 ```text
 C:\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
 ```
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.registry.userassist.UserAssist | findstr /C:"C:\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe"
+* 0xf8a0020900100       \??\C:\Users\Rick\ntuser.datd   ntuser.dat\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\Count    2018-08-04 19:34:10.000000       Value   C:\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe        N/A     014      0:02:02.039000  N/A
+```
 
 其紀錄如下：
 
@@ -1109,6 +1113,10 @@ Time Focused: 0:02:02.039000
 
 ```text
 C:\Users\Rick\AppData\Local\Temp\RarSFX0\
+```
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.registry.userassist.UserAssist | findstr /C:"C:\Users\Rick\AppData\Local\Temp\RarSFX0"
+* 0xf8a0020900100       \??\C:\Users\Rick\ntuser.datd   ntuser.dat\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\Count    2018-08-04 19:34:10.000000       Value   C:\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe        N/A     014      0:02:02.039000  N/A
 ```
 
 因此此檔案具有可疑性。
