@@ -276,25 +276,3 @@ Magnet
 3. Registry 結果與前面 BitTorrent 程序、torrent 檔案與可疑下載檔案互相補強。
 4. 目前 PrintKey 尚未直接證明 Rick And Morty season 1 download.exe 被執行，但可以證明 torrent 關聯環境存在。
 ```
-
----
-
-## 10. 結論
-
-`windows.registry.printkey.PrintKey` 成功列出系統與 Rick 使用者相關的 Registry Key。
-
-本次最重要的發現是 Rick 的 `UsrClass.dat` 中存在：
-
-```text id="u4bj9j"
-.torrent
-BitTorrent
-Magnet
-```
-
-這些 Registry Key 可補強本案中 BitTorrent 下載活動的證據。
-
-結合前面發現的 `.torrent` 檔案、BitTorrent 連線與 `Rick And Morty season 1 download.exe`，可以推論可疑程式很可能與 torrent 下載活動有關。
-
-不過，`PrintKey` 本身只能證明 Registry 中存在相關 Key，尚不能單獨證明可疑程式已被執行。
-
-下一步應使用 `windows.registry.userassist.UserAssist` 來確認使用者是否曾執行相關程式。
