@@ -156,11 +156,11 @@ vol.exe -f memory.vmem windows.ssdt.SSDT
 
 | Plugin | 功能說明 | 用途 |
 |---|---|---|
-| `windows.handles.Handles` | 顯示行程開啟的 Handle | 看行程開啟了哪些檔案、Registry、Mutex |
-| `windows.mutantscan.MutantScan` | 掃描 Mutex / Mutant | 找惡意程式常用 Mutex |
-| `windows.privileges.Privs` | 顯示行程 Token 權限 | 看是否有 Debug、SeImpersonate 等高風險權限 |
-| `windows.getsids.GetSIDs` | 顯示行程擁有者 SID | 判斷行程使用者身分 |
-| `windows.getservicesids.GetServiceSIDs` | 顯示服務 SID | 服務身分分析 |
+| [`windows.handles.Handles`](Volatility3測試/V3Handles.md) | 顯示行程開啟的 Handle | 看行程開啟了哪些檔案、Registry、Mutex |
+| [`windows.mutantscan.MutantScan`](Volatility3測試/V3MutantScan.md) | 掃描 Mutex / Mutant | 找惡意程式常用 Mutex |
+| [`windows.privileges.Privs`](Volatility3測試/V3Privileges.md) | 顯示行程 Token 權限 | 看是否有 Debug、SeImpersonate 等高風險權限 |
+| [`windows.getsids.GetSIDs`](Volatility3測試/V3GetSIDs.md) | 顯示行程擁有者 SID | 判斷行程使用者身分 |
+| [`windows.getservicesids.GetServiceSIDs`](Volatility3測試/V3GetServiceSIDs.md) | 顯示服務 SID | 服務身分分析 |
 
 ---
 
