@@ -465,25 +465,7 @@ crypt
 
 雖然結果中有部分 DriverName 顯示為 `-` 或 `N/A`，但這在 Volatility 解析 Device Object 時並不少見，不能單獨判斷為惡意。
 
----
-
-## 10. 鑑識判斷
-
-本次 `DeviceTree` 結果可得到以下判斷：
-
-```text
-1. 系統存在正常 Windows 裝置與 Driver Stack
-2. VMware 相關裝置與虛擬機環境相符
-3. 磁碟、網路、滑鼠、鍵盤裝置堆疊未見明確可疑附掛
-4. 未發現 Rick And Morty 或 vmware-tray.exe 相關 Device / Driver
-5. 未發現明確 Kernel Driver / Device Stack 型惡意常駐跡象
-```
-
-因此，`DeviceTree` 在本案中主要作為 Kernel / Driver 層面的輔助排查。
-
----
-
-## 11. 與其他 Plugin 的關聯
+## 10. 與其他 Plugin 的關聯
 
 此結果可與前面 Kernel 層分析互相補強：
 
@@ -499,26 +481,3 @@ DeviceTree：未發現明確可疑 Device Stack 附掛
 ```
 
 這些結果整體支持：本案目前不像是 Kernel-mode Rootkit 或 Driver-level 攻擊。
-
----
-
-## 12. 結論
-
-`windows.devicetree.DeviceTree` 成功列出系統中的 Driver Object、Device Object 與 Attached Device。
-
-結果顯示系統中主要為正常 Windows、VMware、磁碟、網路、USB、滑鼠與鍵盤相關裝置堆疊。
-
-未發現 `Rick And Morty`、`vmware-tray.exe`、`RarSFX0` 或 `READ_IT` 相關的 Device / Driver。
-
-因此，本案目前沒有明確證據顯示攻擊者使用 Kernel Driver、Rootkit 或 Device Stack Hooking 技術。
-
-本案主線仍應放在 User-mode 感染鏈：
-
-```text
-Rick 使用者
-→ BitTorrent 下載活動
-→ Rick And Morty season 1 download.exe
-→ Temp\RarSFX0\vmware-tray.exe
-→ 可疑記憶體區段
-→ READ_IT.txt 加密提示
-```
