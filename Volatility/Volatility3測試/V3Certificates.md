@@ -147,38 +147,3 @@ Microsoft\SystemCertificates    Disallowed    7D7F4414CCEF168ADF6BF40753B5BECD78
 ```
 
 因此，憑證分析目前沒有提供本案主要感染來源的直接證據。
-
----
-
-## 7. 鑑識判斷
-
-`Certificates` 在本案中屬於輔助檢查項目。
-
-其主要目的為確認系統是否存在憑證層級的異常，例如惡意 Root CA 或不正常的信任憑證。
-
-根據目前結果，未發現明顯異常憑證，也未發現與本案可疑程式直接相關的憑證紀錄。
-
-因此，本案目前仍較符合使用者透過 BitTorrent 下載並執行可疑程式，導致檔案加密的情境，而不是憑證遭竄改或憑證信任鏈被濫用。
-
----
-
-## 8. 結論
-
-`windows.registry.certificates.Certificates` 成功列出系統中的憑證資訊。
-
-本次結果多數為正常的系統 Root CA、AuthRoot、CA 與 Microsoft 相關憑證。
-
-雖然有出現 `Disallowed` 憑證項目，但其名稱顯示為 `Fraudulent, NOT Microsoft`，屬於系統已禁止信任的憑證紀錄，未發現其與本案可疑程式有直接關聯。
-
-因此，本 Plugin 未發現明顯惡意憑證或憑證層級感染跡象。
-
-本案主要證據仍集中於：
-
-```text
-BitTorrent 下載活動
-Rick And Morty season 1 download.exe
-Temp\RarSFX0\vmware-tray.exe
-READ_IT.txt 加密提示檔
-UserAssist 執行紀錄
-```
-
