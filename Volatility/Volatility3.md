@@ -168,9 +168,9 @@ vol.exe -f memory.vmem windows.ssdt.SSDT
 
 | Plugin | 功能說明 | 用途 |
 |---|---|---|
-| [`windows.hashdump.Hashdump`](Volatility3測試/V3GetServiceSIDs.md) | Dump 使用者 Hash | 分析本機帳號密碼雜湊 |
-| [`windows.cachedump.Cachedump`](Volatility3測試/V3GetServiceSIDs.md) | Dump cached logon secrets | 取得快取登入資訊 |
-| [`windows.lsadump.Lsadump`](Volatility3測試/V3GetServiceSIDs.md) | Dump LSA secrets | 分析 LSA 機密資料 |
+| [`windows.hashdump.Hashdump`](Volatility3測試/V3Hashdump.md) | Dump 使用者 Hash | 分析本機帳號密碼雜湊 |
+| [`windows.cachedump.Cachedump`](Volatility3測試/V3Cachedump.md) | Dump cached logon secrets | 取得快取登入資訊 |
+| [`windows.lsadump.Lsadump`](Volatility3測試/V3Lsadump.md) | Dump LSA secrets | 分析 LSA 機密資料 |
 
 ### 報告寫法範例
 
