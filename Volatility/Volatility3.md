@@ -113,11 +113,11 @@ vol.exe -f memory.vmem windows.dumpfiles.DumpFiles
 
 | Plugin | 功能說明 | 用途 |
 |---|---|---|
-| `windows.registry.hivelist.HiveList` | 列出 Registry hive | 找 SYSTEM、SOFTWARE、SAM、NTUSER.DAT |
-| `windows.registry.hivescan.HiveScan` | 掃描 Registry hive | 找隱藏或殘留的 hive |
-| `windows.registry.printkey.PrintKey` | 顯示指定 Registry key | 查看登錄鍵內容 |
-| `windows.registry.userassist.UserAssist` | 顯示 UserAssist 執行紀錄 | 分析使用者執行過哪些程式 |
-| `windows.registry.certificates.Certificates` | 顯示憑證儲存區 | 查看系統憑證 |
+| [`windows.registry.hivelist.HiveList`](Volatility3測試/V3HiveList.md) | 列出 Registry hive | 找 SYSTEM、SOFTWARE、SAM、NTUSER.DAT |
+| [`windows.registry.hivescan.HiveScan`](Volatility3測試/V3HiveScan.md) | 掃描 Registry hive | 找隱藏或殘留的 hive |
+| [`windows.registry.printkey.PrintKey`](Volatility3測試/V3PrintKey.md) | 顯示指定 Registry key | 查看登錄鍵內容 |
+| [`windows.registry.userassist.UserAssist`](Volatility3測試/V3UserAssist.md) | 顯示 UserAssist 執行紀錄 | 分析使用者執行過哪些程式 |
+| [`windows.registry.certificates.Certificates`](Volatility3測試/V3Certificates.md) | 顯示憑證儲存區 | 查看系統憑證 |
 
 ### 報告寫法範例
 
