@@ -3483,3 +3483,201 @@ Offset  Driver Name     IRP     Address Module  Symbol
 0x7fe9ecd0      N/A     IRP_MJ_PNP      0xf80002ab81d4  ntoskrnl        IopInvalidDeviceRequest
 
 ```
+
+
+# windows.driverirp.DriverIrp 分析
+
+## 1. Plugin 功能說明
+
+`windows.driverirp.DriverIrp` 用來列出 Windows Kernel Driver 的 IRP Major Function Table。
+
+IRP 是 I/O Request Packet 的縮寫，是 Windows 核心中用來處理 I/O 請求的重要機制。Driver 會註冊不同的 IRP handler 來處理檔案、裝置、網路、USB、鍵盤滑鼠、磁碟等請求。
+
+在 Rootkit 或惡意 Driver 分析中，攻擊者可能會修改 IRP handler，使 I/O 請求被導向惡意程式碼，以達到：
+
+```text id="vovhi7"
+隱藏檔案
+隱藏裝置
+攔截讀寫請求
+監控鍵盤或滑鼠輸入
+干擾系統或鑑識工具
+```
+
+因此，`DriverIrp` 可用來檢查是否存在可疑的 Driver IRP Hook。
+
+---
+
+## 2. 執行指令
+
+```bash id="9h16my"
+.\vol.exe -f .\OtterCTF.vmem windows.driverirp.DriverIrp
+```
+
+---
+
+## 3. 欄位說明
+
+| 欄位            | 說明                     |
+| ------------- | ---------------------- |
+| `Offset`      | Driver Object 在記憶體中的位置 |
+| `Driver Name` | Driver 名稱              |
+| `IRP`         | IRP Major Function 類型  |
+| `Address`     | IRP handler 位址         |
+| `Module`      | handler 所屬模組           |
+| `Symbol`      | handler 對應函式名稱         |
+
+---
+
+## 4. 執行結果摘要
+
+本次結果中出現多個正常 Windows 核心與驅動模組，例如：
+
+```text id="q94l9t"
+ntoskrnl
+hal
+ACPI
+Wdf01000
+srv
+srv2
+HTTP
+lltdio
+secdrv
+bowser
+mpsdrv
+mrxsmb
+mrxsmb10
+vmmemctl
+HIDCLASS
+mouhid
+bthport
+rfcomm
+BthEnum
+ndis
+USBPORT
+usbhub
+```
+
+這些大多屬於 Windows 系統、網路、USB、藍牙、音訊、滑鼠鍵盤、SMB、VMware 工具或硬體相關驅動。
+
+---
+
+## 5. 重要觀察
+
+### 5.1 大量 IopInvalidDeviceRequest
+
+結果中多次出現：
+
+```text id="tpa8e0"
+ntoskrnl    IopInvalidDeviceRequest
+```
+
+這是正常情況，代表該 Driver 沒有實作某些 IRP 功能，因此 Windows 將該請求導向預設的 Invalid Device Request handler。
+
+這不代表惡意行為。
+
+---
+
+### 5.2 正常 Driver 模組
+
+本次結果中可看到許多正常 Driver 的 IRP handler，例如：
+
+```text id="b4enj3"
+ACPI
+Wdf01000
+HTTP
+ndis
+USBPORT
+usbhub
+HIDCLASS
+mouhid
+mrxsmb
+mrxsmb10
+vmmemctl
+```
+
+其中 `vmmemctl` 是 VMware 相關 Driver，符合本案環境為 VMware 記憶體映像的背景。
+
+---
+
+### 5.3 secdrv 觀察
+
+結果中也出現：
+
+```text id="d6u2jr"
+secdrv
+```
+
+`secdrv` 是舊版 Windows 中與 SafeDisc DRM 相關的 Driver。它本身在舊系統中可能出現，雖然屬於較舊元件，但本次結果沒有看到它被 Hook 到未知位址或可疑模組。
+
+因此目前僅作為注意項目，不作為主要惡意證據。
+
+---
+
+## 6. 鑑識判斷
+
+本次 `DriverIrp` 結果沒有看到以下可疑情況：
+
+```text id="gx7fb7"
+IRP handler 指向 unknown 模組
+IRP handler 指向可疑 Driver
+IRP handler 指向非正常核心範圍
+與 Rick And Morty 或 vmware-tray.exe 相關的 Driver
+明顯 Rootkit I/O Hook 行為
+```
+
+因此，目前沒有證據顯示本案存在 Driver IRP Hook 或 Kernel Rootkit 行為。
+
+---
+
+## 7. 與本案關聯
+
+本案主要證據仍集中於 User-mode 執行鏈：
+
+```text id="s7nhrk"
+BitTorrent 下載活動
+Rick And Morty season 1 download.exe
+Temp\RarSFX0\vmware-tray.exe
+Malfind / VadInfo 可疑記憶體區段
+READ_IT.txt 加密提示檔
+```
+
+而 `DriverIrp` 主要用來檢查 Kernel Driver 層級是否被 Hook。
+
+本次結果未發現可疑 IRP Hook，因此可判斷本案目前較不像是 Kernel Driver Rootkit，而是使用者執行可疑 EXE 後造成的 User-mode 感染與檔案加密行為。
+
+---
+
+## 8. 結論
+
+`windows.driverirp.DriverIrp` 成功列出系統 Driver 的 IRP handler。
+
+本次結果中，大多數 IRP handler 指向正常 Windows 核心模組或正常 Driver，例如：
+
+```text id="jyu2pp"
+ntoskrnl
+hal
+ACPI
+Wdf01000
+HTTP
+ndis
+USBPORT
+usbhub
+HIDCLASS
+mouhid
+vmmemctl
+```
+
+未發現明顯指向未知模組、可疑 Driver 或惡意 Hook 的 IRP handler。
+
+因此，此 Plugin 結果可作為排除證據，表示目前沒有發現 Driver IRP Hook 或 Kernel Rootkit 層級攻擊跡象。
+
+本案重點仍應放在：
+
+```text id="objb37"
+Rick 使用者執行可疑 Torrent EXE
+Rick And Morty 啟動 vmware-tray.exe
+vmware-tray.exe 出現可疑記憶體區段
+READ_IT.txt 顯示檔案遭加密
+```
+
+
