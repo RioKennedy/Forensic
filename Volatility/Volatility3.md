@@ -182,7 +182,7 @@ Credential 類 Plugin 可用於分析 Windows 記憶體中的認證資訊，例�
 
 | Plugin | 功能說明 | 用途 |
 |---|---|---|
-| [`windows.svcscan.SvcScan`](Volatility3測試/V3SvcScan.md.md) | 掃描 Windows services | 找可疑服務 |
+| [`windows.svcscan.SvcScan`](Volatility3測試/V3SvcScan.md) | 掃描 Windows services | 找可疑服務 |
 | [`windows.devicetree.DeviceTree`](Volatility3測試/V3DeviceTree.md) | 顯示 Driver 與 Device Tree | 分析裝置與驅動關係 |
 | [`windows.driverirp.DriverIrp`](Volatility3測試/V3DriveIrp.md) | 顯示 Driver IRP | 偵測 Driver Hook |
 | [`windows.driverscan.DriverScan`](Volatility3測試/V3DriverScan.md) | 掃描 Driver | 找隱藏 Driver |
@@ -195,11 +195,11 @@ Credential 類 Plugin 可用於分析 Windows 記憶體中的認證資訊，例�
 
 | Plugin | 功能說明 | 用途 |
 |---|---|---|
-| `windows.bigpools.BigPools` | 列出 Big Page Pools | Kernel memory pool 分析 |
-| `windows.poolscanner.PoolScanner` | 通用 Pool 掃描器 | 掃描 Windows pool object |
-| `windows.filescan.FileScan` | 掃描 File Object | 找檔案物件 |
-| `windows.mutantscan.MutantScan` | 掃描 Mutant / Mutex | 找同步物件 |
-| `windows.mbrscan.MBRScan` | 掃描 MBR | Boot record 分析 |
+| [`windows.bigpools.BigPools`](Volatility3測試/V3BigPools.md) | 列出 Big Page Pools | Kernel memory pool 分析 |
+| [`windows.poolscanner.PoolScanner`](Volatility3測試/V3PoolScanner.md) | 通用 Pool 掃描器 | 掃描 Windows pool object |
+| [`windows.filescan.FileScan`](Volatility3測試/V3Filescan.md) | 掃描 File Object | 找檔案物件 |
+| [`windows.mutantscan.MutantScan`](Volatility3測試/V3MutantScan.md) | 掃描 Mutant / Mutex | 找同步物件 |
+| [`windows.mbrscan.MBRScan`](Volatility3測試/V3Mbrscan.md) | 掃描 MBR | Boot record 分析 |
 
 ---
 
