@@ -2385,6 +2385,50 @@ SeDebugPrivilege
 SeCreateSymbolicLinkPrivilege
 ```
 
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.privileges.Privs --pid 3720
+Volatility 3 Framework 2.5.0
+Progress:  100.00               PDB scanning finished
+PID     Process Value   Privilege       Attributes      Description
+
+3720    vmware-tray.ex  2       SeCreateTokenPrivilege          Create a token object
+3720    vmware-tray.ex  3       SeAssignPrimaryTokenPrivilege           Replace a process-level token
+3720    vmware-tray.ex  4       SeLockMemoryPrivilege           Lock pages in memory
+3720    vmware-tray.ex  5       SeIncreaseQuotaPrivilege        Present Increase quotas
+3720    vmware-tray.ex  6       SeMachineAccountPrivilege               Add workstations to the domain
+3720    vmware-tray.ex  7       SeTcbPrivilege          Act as part of the operating system
+3720    vmware-tray.ex  8       SeSecurityPrivilege     Present Manage auditing and security log
+3720    vmware-tray.ex  9       SeTakeOwnershipPrivilege        Present Take ownership of files/objects
+3720    vmware-tray.ex  10      SeLoadDriverPrivilege   Present Load and unload device drivers
+3720    vmware-tray.ex  11      SeSystemProfilePrivilege        Present Profile system performance
+3720    vmware-tray.ex  12      SeSystemtimePrivilege   Present Change the system time
+3720    vmware-tray.ex  13      SeProfileSingleProcessPrivilege Present Profile a single process
+3720    vmware-tray.ex  14      SeIncreaseBasePriorityPrivilege Present Increase scheduling priority
+3720    vmware-tray.ex  15      SeCreatePagefilePrivilege       Present Create a pagefile
+3720    vmware-tray.ex  16      SeCreatePermanentPrivilege              Create permanent shared objects
+3720    vmware-tray.ex  17      SeBackupPrivilege       Present Backup files and directories
+3720    vmware-tray.ex  18      SeRestorePrivilege      Present Restore files and directories
+3720    vmware-tray.ex  19      SeShutdownPrivilege     Present Shut down the system
+3720    vmware-tray.ex  20      SeDebugPrivilege        Present Debug programs
+3720    vmware-tray.ex  21      SeAuditPrivilege                Generate security audits
+3720    vmware-tray.ex  22      SeSystemEnvironmentPrivilege    Present Edit firmware environment values
+3720    vmware-tray.ex  23      SeChangeNotifyPrivilege Present,Enabled,Default Receive notifications of changes to files or directories
+3720    vmware-tray.ex  24      SeRemoteShutdownPrivilege       Present Force shutdown from a remote system
+3720    vmware-tray.ex  25      SeUndockPrivilege       Present Remove computer from docking station
+3720    vmware-tray.ex  26      SeSyncAgentPrivilege            Synch directory service data
+3720    vmware-tray.ex  27      SeEnableDelegationPrivilege             Enable user accounts to be trusted for delegation
+3720    vmware-tray.ex  28      SeManageVolumePrivilege Present Manage the files on a volume
+3720    vmware-tray.ex  29      SeImpersonatePrivilege  Present,Enabled,Default Impersonate a client after authentication
+3720    vmware-tray.ex  30      SeCreateGlobalPrivilege Present,Enabled,Default Create global objects
+3720    vmware-tray.ex  31      SeTrustedCredManAccessPrivilege         Access Credential Manager as a trusted caller
+3720    vmware-tray.ex  32      SeRelabelPrivilege              Modify the mandatory integrity level of an object
+3720    vmware-tray.ex  33      SeIncreaseWorkingSetPrivilege   Present Allocate more memory for user applications
+3720    vmware-tray.ex  34      SeTimeZonePrivilege     Present Adjust the time zone of the computer's internal clock
+3720    vmware-tray.ex  35      SeCreateSymbolicLinkPrivilege   Present Required to create a symbolic link
+3720    vmware-tray.ex  36      SeDelegateSessionUserImpersonatePrivilege               Obtain an impersonation token for another user in the same session.
+
+```
+
 但從結果來看，這些多數只是 `Present`，並沒有大量顯示為 `Enabled`。
 
 比較明確的啟用權限主要是：
