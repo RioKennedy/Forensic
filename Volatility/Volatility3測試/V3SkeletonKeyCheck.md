@@ -61,29 +61,3 @@ PID  Process  Skeleton Key Found  rc4HmacInitialize  rc4HmacDecrypt
 2. 沒有發現 LSASS 認證函式被明顯 patch
 3. 本案重點不在網域認證或帳號登入繞過
 ```
-
----
-
-## 5. 與本案關聯
-
-本案目前主要證據集中於：
-
-```text id="b6k559"
-BitTorrent 下載活動
-Rick And Morty season 1 download.exe
-Temp\RarSFX0\vmware-tray.exe
-Malfind / VadInfo 可疑記憶體區段
-READ_IT.txt 加密提示檔
-```
-
-而 `Skeleton_Key_Check` 是針對 Windows 認證攻擊的檢查，與本案的勒索/加密行為關聯較低。
-
----
-
-## 6. 結論
-
-`windows.skeleton_key_check.Skeleton_Key_Check` 成功執行，但沒有發現 Skeleton Key 攻擊跡象。
-
-本案沒有證據顯示系統存在 Skeleton Key 類型的認證繞過攻擊。
-
-因此，此 Plugin 結果可作為排除項目，表示本案重點仍應放在使用者執行可疑 EXE、可疑子程序 `vmware-tray.exe`、以及後續出現的檔案加密提示。
