@@ -1044,6 +1044,12 @@ Time Focused: 0:05:51.177000
 Last Updated: 2018-08-04 19:31:26
 ```
 
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.registry.userassist.UserAssist | findstr BitTorrent.exe
+* 0xf8a0020900100       \??\C:\Users\Rick\ntuser.datd   ntuser.dat\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\Count    2018-08-04 19:34:10.000000       Value   C:\Users\Rick\Downloads\BitTorrent.exe  N/A     0       0       0:00:01.795000   N/A
+* 0xf8a002090010        \??\C:\Users\Rick\ntuser.dat    ntuser.dat\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\Count    2018-08-04 19:34:10.000000       Value   C:\Users\Rick\AppData\Roaming\BitTorrent\BitTorrent.exe N/A     3       38       0:05:51.177000  2018-08-04 19:31:26.000000
+```
+
 此紀錄表示 Rick 使用者曾執行 BitTorrent，且時間接近事件發生前。
 
 這與前面 `NetScan` 發現的 BitTorrent 網路連線，以及 `FileScan` 發現的 torrent 檔案相互吻合。
