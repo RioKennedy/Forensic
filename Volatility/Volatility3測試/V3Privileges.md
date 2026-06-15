@@ -2298,6 +2298,50 @@ SeUndockPrivilege    Present
 SeIncreaseWorkingSetPrivilege    Present
 ```
 
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.privileges.Privs --pid 3820
+Volatility 3 Framework 2.5.0
+Progress:  100.00               PDB scanning finished
+PID     Process Value   Privilege       Attributes      Description
+
+3820    Rick And Morty  2       SeCreateTokenPrivilege          Create a token object
+3820    Rick And Morty  3       SeAssignPrimaryTokenPrivilege           Replace a process-level token
+3820    Rick And Morty  4       SeLockMemoryPrivilege           Lock pages in memory
+3820    Rick And Morty  5       SeIncreaseQuotaPrivilege                Increase quotas
+3820    Rick And Morty  6       SeMachineAccountPrivilege               Add workstations to the domain
+3820    Rick And Morty  7       SeTcbPrivilege          Act as part of the operating system
+3820    Rick And Morty  8       SeSecurityPrivilege             Manage auditing and security log
+3820    Rick And Morty  9       SeTakeOwnershipPrivilege                Take ownership of files/objects
+3820    Rick And Morty  10      SeLoadDriverPrivilege           Load and unload device drivers
+3820    Rick And Morty  11      SeSystemProfilePrivilege                Profile system performance
+3820    Rick And Morty  12      SeSystemtimePrivilege           Change the system time
+3820    Rick And Morty  13      SeProfileSingleProcessPrivilege         Profile a single process
+3820    Rick And Morty  14      SeIncreaseBasePriorityPrivilege         Increase scheduling priority
+3820    Rick And Morty  15      SeCreatePagefilePrivilege               Create a pagefile
+3820    Rick And Morty  16      SeCreatePermanentPrivilege              Create permanent shared objects
+3820    Rick And Morty  17      SeBackupPrivilege               Backup files and directories
+3820    Rick And Morty  18      SeRestorePrivilege              Restore files and directories
+3820    Rick And Morty  19      SeShutdownPrivilege     Present Shut down the system
+3820    Rick And Morty  20      SeDebugPrivilege                Debug programs
+3820    Rick And Morty  21      SeAuditPrivilege                Generate security audits
+3820    Rick And Morty  22      SeSystemEnvironmentPrivilege            Edit firmware environment values
+3820    Rick And Morty  23      SeChangeNotifyPrivilege Present,Enabled,Default Receive notifications of changes to files or directories
+3820    Rick And Morty  24      SeRemoteShutdownPrivilege               Force shutdown from a remote system
+3820    Rick And Morty  25      SeUndockPrivilege       Present Remove computer from docking station
+3820    Rick And Morty  26      SeSyncAgentPrivilege            Synch directory service data
+3820    Rick And Morty  27      SeEnableDelegationPrivilege             Enable user accounts to be trusted for delegation
+3820    Rick And Morty  28      SeManageVolumePrivilege         Manage the files on a volume
+3820    Rick And Morty  29      SeImpersonatePrivilege          Impersonate a client after authentication
+3820    Rick And Morty  30      SeCreateGlobalPrivilege         Create global objects
+3820    Rick And Morty  31      SeTrustedCredManAccessPrivilege         Access Credential Manager as a trusted caller
+3820    Rick And Morty  32      SeRelabelPrivilege              Modify the mandatory integrity level of an object
+3820    Rick And Morty  33      SeIncreaseWorkingSetPrivilege   Present Allocate more memory for user applications
+3820    Rick And Morty  34      SeTimeZonePrivilege     Present Adjust the time zone of the computer's internal clock
+3820    Rick And Morty  35      SeCreateSymbolicLinkPrivilege           Required to create a symbolic link
+3820    Rick And Morty  36      SeDelegateSessionUserImpersonatePrivilege               Obtain an impersonation token for another user in the same session.
+
+```
+
 其中 `SeChangeNotifyPrivilege` 是 Windows 一般 Process 常見權限，用於接收檔案或目錄變更通知，並不代表惡意。
 
 未看到 PID 3820 明顯啟用以下高風險權限：
