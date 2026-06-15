@@ -81,35 +81,3 @@ Rick
 ```
 
 因此，本案使用者身分分析仍以本機帳號 `Rick` 為主。
-
----
-
-## 6. 與本案關聯
-
-本案主要證據集中在 Rick 使用者的 User-mode 執行鏈：
-
-```text
-Rick 使用者
-→ BitTorrent 下載活動
-→ Rick And Morty season 1 download.exe
-→ Temp\RarSFX0\vmware-tray.exe
-→ 可疑記憶體區段
-→ READ_IT.txt 加密提示
-```
-
-`Cachedump` 沒有提供新的憑證或網域帳號證據。
-
-因此，此 Plugin 可作為輔助檢查，說明本案未取得 Domain Cached Credentials。
-
----
-
-## 7. 結論
-
-`windows.cachedump.Cachedump` 執行後未列出任何 cached credentials，並顯示 `Unable to find nlkma key` 警告。
-
-此結果表示 Volatility 無法取得或解析網域快取登入憑證所需的 key。
-
-目前沒有證據顯示本案涉及網域帳號快取憑證。
-
-本案帳號分析仍以 `Hashdump` 取得的本機帳號 `Rick` 為主，而主要惡意行為仍集中於 `Rick And Morty` 與 `vmware-tray.exe` 的執行鏈。
-
