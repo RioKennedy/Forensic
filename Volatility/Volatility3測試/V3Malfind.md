@@ -646,3 +646,199 @@ f0 af 9a 04 f0 af 9a 04 ........
 0x4990006:      add     byte ptr [ecx], al
 0x4990008:      out     dx, al
 ```
+
+
+# windows.malfind.Malfind 分析
+
+## 1. Plugin 功能說明
+
+`windows.malfind.Malfind` 用來掃描行程記憶體中可疑的 VAD 區塊。
+
+Malfind 主要會尋找具有可疑權限的記憶體區域，例如：
+
+```text
+PAGE_EXECUTE_READWRITE
+PAGE_EXECUTE_WRITECOPY
+```
+
+這類記憶體區塊可能代表程式有注入程式碼、Shellcode、解殼後程式碼或惡意程式在記憶體中動態產生可執行內容。
+
+---
+
+## 2. 執行指令
+
+本次執行指令如下：
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind
+```
+
+此指令會掃描所有 Process，而不是只掃描單一 PID。
+
+---
+
+## 3. 欄位說明
+
+| 欄位              | 說明                 |
+| --------------- | ------------------ |
+| `PID`           | 行程編號               |
+| `Process`       | 行程名稱               |
+| `Start VPN`     | 可疑記憶體區塊起始位址        |
+| `End VPN`       | 可疑記憶體區塊結束位址        |
+| `Tag`           | VAD 標籤             |
+| `Protection`    | 記憶體保護權限            |
+| `CommitCharge`  | 記憶體配置大小            |
+| `PrivateMemory` | 是否為 private memory |
+| `File output`   | 是否有 dump 出檔案       |
+| `Hexdump`       | 可疑記憶體區塊的十六進位內容     |
+| `Disasm`        | 反組譯結果              |
+
+---
+
+## 4. 本次掃描結果重點
+
+本次 Malfind 發現多個具有 `PAGE_EXECUTE_READWRITE` 權限的記憶體區塊，包含：
+
+```text
+WmiPrvSE.exe
+explorer.exe
+BitTorrent.exe
+PresentationFontCache.exe
+mscorsvw.exe
+svchost.exe
+chrome.exe
+vmware-tray.exe
+WebCompanionInstaller
+WebCompanion.exe
+Lavasoft.WCAssistant
+```
+
+其中最需要注意的是：
+
+```text
+PID 3720  vmware-tray.ex
+```
+
+因為前面已經發現此行程路徑為：
+
+```text
+C:\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
+```
+
+該路徑位於使用者 Temp 目錄中的 `RarSFX0`，不符合正常 VMware 程式位置，因此具有高度可疑性。
+
+---
+
+## 5. PID 3720 vmware-tray.exe 分析
+
+Malfind 在 PID 3720 中發現多個可疑記憶體區塊：
+
+```text
+PID 3720  vmware-tray.ex  0x670000  0x6affff  VadS  PAGE_EXECUTE_READWRITE
+PID 3720  vmware-tray.ex  0x510000  0x54ffff  VadS  PAGE_EXECUTE_READWRITE
+PID 3720  vmware-tray.ex  0xc00000  0xc3ffff  VadS  PAGE_EXECUTE_READWRITE
+PID 3720  vmware-tray.ex  0xa10000  0xa4ffff  VadS  PAGE_EXECUTE_READWRITE
+```
+
+這代表 `vmware-tray.exe` 行程中存在多個同時具有「可寫入」與「可執行」權限的記憶體區塊。
+
+這種權限組合在惡意程式分析中需要特別注意，因為它可能被用來執行動態產生的程式碼。
+
+---
+
+## 6. 與前面證據的關聯
+
+前面分析已經發現：
+
+```text
+CmdLine:
+C:\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
+
+Pstree:
+Rick And Morty season 1 download.exe
+↓
+vmware-tray.exe
+
+UserAssist:
+C:\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
+
+DumpFiles:
+成功 dump 出 vmware-tray.exe
+
+READ_IT.txt:
+Your files have been encrypted.
+```
+
+因此，Malfind 發現 PID 3720 有可疑可執行記憶體區塊，可進一步補強 `vmware-tray.exe` 的可疑性。
+
+---
+
+## 7. PID 3820 Rick And Morty 結果說明
+
+本次完整 Malfind 結果中沒有看到 PID 3820 `Rick And Morty` 的項目。
+
+這代表 Malfind 沒有在 PID 3820 中偵測到明顯符合條件的可疑 VAD 區塊。
+
+但這不代表 `Rick And Morty season 1 download.exe` 是正常檔案。
+
+原因是前面已有多項證據顯示它具有高度可疑性：
+
+```text
+1. 位於 C:\Torrents\
+2. 檔名偽裝成影片下載
+3. 實際副檔名為 .exe
+4. UserAssist 顯示 Rick 使用者曾執行
+5. Pstree 顯示其啟動 vmware-tray.exe
+6. READ_IT.txt 顯示檔案遭加密
+```
+
+因此，`Rick And Morty season 1 download.exe` 仍可判定為主要可疑執行檔。
+
+---
+
+## 8. 其他行程說明
+
+Malfind 也在 `BitTorrent.exe`、`WebCompanion`、`Lavasoft.WCAssistant`、`svchost.exe` 等行程中發現 `PAGE_EXECUTE_READWRITE` 區塊。
+
+不過，單純出現 `PAGE_EXECUTE_READWRITE` 不一定代表惡意，部分正常程式、JIT、.NET 或瀏覽器相關程式也可能產生這類記憶體區塊。
+
+因此，本案分析重點仍放在與事件鏈高度相關的 PID 3720 `vmware-tray.exe`。
+
+---
+
+## 9. 鑑識判斷
+
+本次 `Malfind` 結果支持以下判斷：
+
+```text
+1. PID 3720 vmware-tray.exe 存在多個 PAGE_EXECUTE_READWRITE 記憶體區塊
+2. vmware-tray.exe 位於 Temp\RarSFX0 路徑，位置不正常
+3. vmware-tray.exe 與 Rick And Morty season 1 download.exe 具有父子程序關係
+4. Malfind 沒有直接顯示 PID 3820 的可疑注入區塊，但不影響其作為感染來源的判斷
+```
+
+---
+
+## 10. 結論
+
+`windows.malfind.Malfind` 發現 PID 3720 `vmware-tray.exe` 中存在多個可疑的 `PAGE_EXECUTE_READWRITE` 記憶體區塊。
+
+此結果結合前面 `CmdLine`、`Pstree`、`UserAssist` 與 `DumpFiles` 的證據，可判斷 `vmware-tray.exe` 是本案中高度可疑的執行程式。
+
+雖然 `Rick And Morty season 1 download.exe` 沒有在 Malfind 中出現可疑 VAD 紀錄，但它仍是主要感染來源或觸發程式，因為它是由 Rick 使用者執行，並且啟動了位於 Temp\RarSFX0 的 `vmware-tray.exe`。
+
+整體攻擊流程可整理如下：
+
+```text
+BitTorrent 下載活動
+↓
+Rick 使用者執行 Rick And Morty season 1 download.exe
+↓
+Rick And Morty 啟動 Temp\RarSFX0\vmware-tray.exe
+↓
+vmware-tray.exe 出現可疑可執行記憶體區塊
+↓
+系統檔案遭加密
+↓
+READ_IT.txt 顯示加密提示
+```
