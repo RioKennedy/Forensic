@@ -740,6 +740,14 @@ PID 3720  vmware-tray.ex  0xc00000  0xc3ffff  VadS  PAGE_EXECUTE_READWRITE
 PID 3720  vmware-tray.ex  0xa10000  0xa4ffff  VadS  PAGE_EXECUTE_READWRITE
 ```
 
+```
+D:\Forensic\G140A006\VolatilityWorkbench>.\vol.exe -f .\OtterCTF.vmem windows.malfind.Malfind | findstr 3720
+3720ressvmware-tray.ex  0x670000PDB scan0x6affffished   VadS    PAGE_EXECUTE_READWRITE  1       1Disabled
+3720    vmware-tray.ex  0x510000        0x54ffff        VadS    PAGE_EXECUTE_READWRITE  23      1Disabled
+3720    vmware-tray.ex  0xc00000        0xc3ffff        VadS    PAGE_EXECUTE_READWRITE  1       1Disabled
+3720    vmware-tray.ex  0xa10000        0xa4ffff        VadS    PAGE_EXECUTE_READWRITE  1       1Disabled
+```
+
 這代表 `vmware-tray.exe` 行程中存在多個同時具有「可寫入」與「可執行」權限的記憶體區塊。
 
 這種權限組合在惡意程式分析中需要特別注意，因為它可能被用來執行動態產生的程式碼。
