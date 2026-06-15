@@ -47,3 +47,138 @@ Software\Microsoft\SystemCertificates   CA      7CCC2A87E3949F20572B18482980505F
 Software\Microsoft\SystemCertificates   CA      F5AD0BCC1AD56CD150725B1C866C30AD92EF21B0        -
 Software\Microsoft\SystemCertificates   Root    ProtectedRoots  -
 ```
+
+# windows.registry.certificates.Certificates 分析
+
+## 1. Plugin 功能說明
+
+`windows.registry.certificates.Certificates` 用來列出 Windows Registry 中的系統憑證資訊。
+
+此 Plugin 主要可以協助分析：
+
+```text
+系統信任的 Root CA 憑證
+中繼憑證 CA
+被禁止或撤銷信任的憑證
+是否存在可疑或異常新增的憑證
+```
+
+在惡意程式鑑識中，攻擊者有時可能會新增惡意 Root Certificate，使系統信任偽造網站、惡意代理或中間人攻擊憑證。因此檢查憑證儲存區可以用來確認是否有憑證層級的異常。
+
+---
+
+## 2. 執行指令
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.registry.certificates.Certificates
+```
+
+---
+
+## 3. 欄位說明
+
+| 欄位                    | 說明                                          |
+| --------------------- | ------------------------------------------- |
+| `Certificate path`    | 憑證所在的 Registry 路徑                           |
+| `Certificate section` | 憑證分類，例如 `AuthRoot`、`CA`、`ROOT`、`Disallowed` |
+| `Certificate ID`      | 憑證的雜湊識別值                                    |
+| `Certificate name`    | 憑證名稱或發行單位                                   |
+
+---
+
+## 4. 執行結果重點
+
+本次結果中發現多個系統憑證項目，主要包含：
+
+```text
+Microsoft\SystemCertificates\AuthRoot
+Microsoft\SystemCertificates\CA
+Microsoft\SystemCertificates\Disallowed
+Microsoft\SystemCertificates\ROOT
+Software\Microsoft\SystemCertificates\Root
+Software\Microsoft\SystemCertificates\CA
+```
+
+其中 `AuthRoot` 與 `ROOT` 中出現多個常見信任憑證，例如：
+
+```text
+DigiCert
+VeriSign
+GlobalSign
+Go Daddy
+GeoTrust
+thawte
+Microsoft Root Authority
+Microsoft Root Certificate Authority
+Google Trust Services
+```
+
+這些通常屬於正常的系統信任憑證。
+
+---
+
+## 5. Disallowed 憑證
+
+結果中也發現 `Disallowed` 區段：
+
+```text
+Microsoft\SystemCertificates    Disallowed    637162CC59A3A1E25956FA5FA8F60D2E1C52EAC6    Fraudulent, NOT Microsoft
+Microsoft\SystemCertificates    Disallowed    7D7F4414CCEF168ADF6BF40753B5BECD78375931    Fraudulent, NOT Microsoft
+```
+
+`Disallowed` 代表這些憑證已被系統列為不信任或禁止使用。
+
+此結果本身不一定是惡意跡象，反而代表系統中有紀錄被禁止信任的憑證。
+
+---
+
+## 6. 分析結果
+
+本次 `Certificates` 結果主要顯示系統內建或正常存在的憑證項目。
+
+目前未發現以下可疑情況：
+
+```text
+與 Rick And Morty season 1 download.exe 相關的憑證
+與 vmware-tray.exe 相關的憑證
+異常新增的 Root Certificate
+可疑的自簽憑證
+明顯與惡意程式名稱相關的憑證
+```
+
+因此，憑證分析目前沒有提供本案主要感染來源的直接證據。
+
+---
+
+## 7. 鑑識判斷
+
+`Certificates` 在本案中屬於輔助檢查項目。
+
+其主要目的為確認系統是否存在憑證層級的異常，例如惡意 Root CA 或不正常的信任憑證。
+
+根據目前結果，未發現明顯異常憑證，也未發現與本案可疑程式直接相關的憑證紀錄。
+
+因此，本案目前仍較符合使用者透過 BitTorrent 下載並執行可疑程式，導致檔案加密的情境，而不是憑證遭竄改或憑證信任鏈被濫用。
+
+---
+
+## 8. 結論
+
+`windows.registry.certificates.Certificates` 成功列出系統中的憑證資訊。
+
+本次結果多數為正常的系統 Root CA、AuthRoot、CA 與 Microsoft 相關憑證。
+
+雖然有出現 `Disallowed` 憑證項目，但其名稱顯示為 `Fraudulent, NOT Microsoft`，屬於系統已禁止信任的憑證紀錄，未發現其與本案可疑程式有直接關聯。
+
+因此，本 Plugin 未發現明顯惡意憑證或憑證層級感染跡象。
+
+本案主要證據仍集中於：
+
+```text
+BitTorrent 下載活動
+Rick And Morty season 1 download.exe
+Temp\RarSFX0\vmware-tray.exe
+READ_IT.txt 加密提示檔
+UserAssist 執行紀錄
+```
+
