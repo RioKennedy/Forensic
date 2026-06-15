@@ -137,7 +137,7 @@ Registry 類 Plugin 主要用於分析 Windows 登錄檔，例如系統設定、
 | [`windows.callbacks.Callbacks`](Volatility3測試/V3Callbacks.md) | 列出 Kernel callbacks | 找 Rootkit callback hook |
 | [`windows.ssdt.SSDT`](Volatility3測試/V3SSDT.md) | 顯示 System Service Dispatch Table | 找 SSDT Hook |
 | [`windows.driverirp.DriverIrp`](Volatility3測試/V3DriveIrp.md) | 顯示 Driver IRP | 找 Driver hook |
-| `windows.drivermodule.DriverModule`](Volatility3測試/V3DriverModule.md) | 偵測隱藏 Driver | Rootkit 分析 |
+| [`windows.drivermodule.DriverModule`](Volatility3測試/V3DriverModule.md) | 偵測隱藏 Driver | Rootkit 分析 |
 | [`windows.driverscan.DriverScan`](Volatility3測試/V3DriverScan.md) | 掃描 Driver | 找隱藏或殘留 Driver |
 
 ### 常用指令
