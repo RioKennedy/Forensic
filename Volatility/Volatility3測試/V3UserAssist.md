@@ -958,3 +958,277 @@ ff ff ff ff e0 29 36 76 .....)6v
 ff ff ff ff 90 87 7a 9f ......z.
 10 29 d4 01 00 00 00 00 .)......
 ```
+
+
+# windows.registry.userassist.UserAssist 分析
+
+## 1. Plugin 功能說明
+
+`windows.registry.userassist.UserAssist` 用來解析 Windows Registry 中的 UserAssist 紀錄。
+
+UserAssist 是 Windows 用來記錄使用者執行程式、開啟捷徑與互動行為的登錄資料。
+
+在數位鑑識中，UserAssist 常用來確認：
+
+```text
+使用者是否執行過某個程式
+程式執行次數
+使用者互動次數
+最後更新時間
+程式路徑
+```
+
+因此，此 Plugin 對於確認可疑程式是否由使用者執行非常重要。
+
+---
+
+## 2. 執行指令
+
+```bash
+.\vol.exe -f .\OtterCTF.vmem windows.registry.userassist.UserAssist
+```
+
+---
+
+## 3. 欄位說明
+
+| 欄位                | 說明                         |
+| ----------------- | -------------------------- |
+| `Hive Offset`     | Registry Hive 在記憶體中的位置     |
+| `Hive Name`       | Registry Hive 名稱或路徑        |
+| `Path`            | UserAssist Registry Key 路徑 |
+| `Last Write Time` | UserAssist Key 最後寫入時間      |
+| `Type`            | Registry 類型，例如 Key 或 Value |
+| `Name`            | UserAssist 紀錄的程式名稱或路徑      |
+| `ID`              | UserAssist ID              |
+| `Count`           | 執行或使用次數                    |
+| `Focus Count`     | 使用者互動或焦點次數                 |
+| `Time Focused`    | 視窗被使用者聚焦的時間                |
+| `Last Updated`    | 該紀錄最後更新時間                  |
+| `Raw Data`        | 原始 Registry 資料             |
+
+---
+
+## 4. 使用者 Hive
+
+本次 UserAssist 紀錄來自 Rick 使用者的 Registry Hive：
+
+```text
+\??\C:\Users\Rick\ntuser.dat
+```
+
+UserAssist 路徑如下：
+
+```text
+ntuser.dat\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\Count
+```
+
+此結果代表 Rick 使用者帳號中存在程式執行紀錄。
+
+---
+
+## 5. 重要發現一：BitTorrent 執行紀錄
+
+UserAssist 發現 BitTorrent 執行紀錄：
+
+```text
+C:\Users\Rick\AppData\Roaming\BitTorrent\BitTorrent.exe
+```
+
+其紀錄如下：
+
+```text
+Count: 3
+Focus Count: 38
+Time Focused: 0:05:51.177000
+Last Updated: 2018-08-04 19:31:26
+```
+
+此紀錄表示 Rick 使用者曾執行 BitTorrent，且時間接近事件發生前。
+
+這與前面 `NetScan` 發現的 BitTorrent 網路連線，以及 `FileScan` 發現的 torrent 檔案相互吻合。
+
+---
+
+## 6. 重要發現二：Rick And Morty 可疑程式執行紀錄
+
+UserAssist 發現可疑執行檔：
+
+```text
+C:\Torrents\Rick And Morty season 1 download.exe
+```
+
+其紀錄如下：
+
+```text
+Count: 7
+Time Focused: 0:00:01
+Last Updated: 2018-08-04 19:32:55
+```
+
+此結果非常重要，因為它直接證明 Rick 使用者曾執行或開啟此可疑程式。
+
+該檔案位於 `C:\Torrents\` 目錄，檔名偽裝成影片下載，但副檔名為 `.exe`，具有高度可疑性。
+
+此紀錄可與前面 `CmdLine` 結果交叉比對：
+
+```text
+"C:\Torrents\Rick And Morty season 1 download.exe"
+```
+
+---
+
+## 7. 重要發現三：vmware-tray.exe 執行紀錄
+
+UserAssist 也發現：
+
+```text
+C:\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
+```
+
+其紀錄如下：
+
+```text
+Focus Count: 14
+Time Focused: 0:02:02.039000
+```
+
+此檔案位於使用者 Temp 目錄中的 `RarSFX0` 資料夾，代表可能是自解壓縮程式釋放出來的執行檔。
+
+雖然檔名為 `vmware-tray.exe`，但正常 VMware 程式不應該出現在：
+
+```text
+C:\Users\Rick\AppData\Local\Temp\RarSFX0\
+```
+
+因此此檔案具有可疑性。
+
+---
+
+## 8. 其他相關紀錄
+
+UserAssist 也發現以下相關程式：
+
+```text
+Chrome
+cmd.exe
+notepad.exe
+LunarMS.exe
+taskmgr.exe
+rundll32.exe
+C:\Users\Rick\Desktop\vmware-tray.exe
+```
+
+其中較有鑑識價值的是：
+
+```text
+%windir%\system32\notepad.exe
+Last Updated: 2018-08-04 19:15:06
+```
+
+此紀錄可與前面發現 `notepad.exe` 開啟 `Flag.txt.WINDOWS` 的線索互相補強。
+
+另外：
+
+```text
+%windir%\system32\rundll32.exe
+Last Updated: 2018-08-04 19:34:04
+```
+
+其時間接近事件發生後段，可作為輔助觀察，但目前尚無足夠證據判定其為惡意行為。
+
+---
+
+## 9. 時間線整理
+
+根據 UserAssist 結果，可整理出以下時間線：
+
+```text
+2018-08-04 19:31:26
+Rick 使用者執行 BitTorrent.exe
+
+2018-08-04 19:32:55
+Rick 使用者執行 C:\Torrents\Rick And Morty season 1 download.exe
+
+2018-08-04 19:34:10
+UserAssist Key 最後寫入
+
+2018-08-04 19:34 左右
+系統出現 READ_IT.txt，加密提示內容顯示：
+Your files have been encrypted.
+```
+
+此時間線顯示 BitTorrent 活動發生後，Rick 使用者執行了偽裝成影片下載的 `.exe` 檔案，接著系統出現加密提示檔。
+
+---
+
+## 10. 與其他 Plugin 的關聯
+
+| Plugin       | 發現                                       | 關聯                 |
+| ------------ | ---------------------------------------- | ------------------ |
+| `PsList`     | 發現 `Rick And Morty`、`vmware-tray.exe` 程序 | 證明可疑程式存在於執行程序中     |
+| `Pstree`     | `Rick And Morty` 啟動 `vmware-tray.exe`    | 證明可疑程序父子關係         |
+| `CmdLine`    | 顯示完整執行路徑                                 | 證明可疑檔案執行來源         |
+| `FileScan`   | 找到 EXE、READ_IT.txt、Flag.lnk              | 證明檔案物件存在           |
+| `DumpFiles`  | 成功 dump 可疑 EXE 與 READ_IT.txt             | 可進行檔案分析            |
+| `UserAssist` | 顯示使用者執行紀錄                                | 證明 Rick 使用者曾執行可疑程式 |
+
+---
+
+## 11. 鑑識判斷
+
+UserAssist 結果是本案的重要證據。
+
+其結果顯示 Rick 使用者曾執行：
+
+```text
+C:\Torrents\Rick And Morty season 1 download.exe
+```
+
+且該執行時間為：
+
+```text
+2018-08-04 19:32:55
+```
+
+該時間接近加密提示檔出現時間，並且與 BitTorrent 執行紀錄、可疑程序、可疑檔案路徑相互吻合。
+
+因此可以判斷，`Rick And Morty season 1 download.exe` 很可能是本案的主要感染來源或觸發程式。
+
+---
+
+## 12. 結論
+
+`windows.registry.userassist.UserAssist` 成功提供 Rick 使用者的程式執行紀錄。
+
+本次最重要的發現是：
+
+```text
+C:\Users\Rick\AppData\Roaming\BitTorrent\BitTorrent.exe
+C:\Torrents\Rick And Morty season 1 download.exe
+C:\Users\Rick\AppData\Local\Temp\RarSFX0\vmware-tray.exe
+```
+
+其中 `Rick And Morty season 1 download.exe` 具有最高可疑性，因為它位於 Torrents 目錄，檔名偽裝成影片下載，但實際上是 `.exe` 執行檔。
+
+結合 `READ_IT.txt` 的內容：
+
+```text
+Your files have been encrypted.
+```
+
+可以推論本案為使用者透過 BitTorrent 取得並執行可疑程式，導致系統檔案遭加密的事件。
+
+整體攻擊流程可整理如下：
+
+```text
+BitTorrent 下載活動
+↓
+Rick 使用者執行 Rick And Morty season 1 download.exe
+↓
+可疑程式釋放或啟動 Temp\RarSFX0\vmware-tray.exe
+↓
+系統檔案遭加密
+↓
+桌面出現 READ_IT.txt 加密提示檔
+```
