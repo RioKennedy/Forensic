@@ -134,15 +134,3 @@ Registry Hive 是 Windows 登錄檔的重要資料庫，可能包含系統設定
 不過，由於 `HiveScan` 沒有直接顯示 Hive 路徑，因此本案主要採用 `HiveList` 的結果作為 Registry Hive 判斷依據。
 
 `HiveScan` 可作為輔助證據，確認記憶體中確實存在多個 Registry Hive 結構。
-
----
-
-## 8. 結論
-
-`windows.registry.hivescan.HiveScan` 成功掃描到多個 Registry Hive 結構 Offset。
-
-此結果可補強前面 `HiveList` 的分析，表示記憶體中存在可供 Registry 分析的 Hive 資料。
-
-但由於 `HiveScan` 僅提供 Offset，無法直接判斷 Hive 名稱與路徑，因此本案後續仍以 `HiveList` 找到的 Rick 使用者 Hive 作為主要分析來源。
-
-下一步應使用 `windows.registry.userassist.UserAssist` 分析 Rick 使用者的程式執行紀錄，以確認可疑程式是否曾被執行。
