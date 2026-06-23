@@ -184,7 +184,7 @@ Credential 類 Plugin 可用於分析 Windows 記憶體中的認證資訊，例�
 |---|---|---|
 | [`windows.svcscan.SvcScan`](Volatility3測試/V3SvcScan.md) | 掃描 Windows services | 找可疑服務 |
 | [`windows.devicetree.DeviceTree`](Volatility3測試/V3DeviceTree.md) | 顯示 Driver 與 Device Tree | 分析裝置與驅動關係 |
-| [`windows.driverirp.DriverIrp`](Volatility3測試/V3DriveIrp.md) | 顯示 Driver IRP | 偵測 Driver Hook |
+| [`windows.driverirp.DriverIrp`](Volatility3測試/V3DriverIrp.md) | 顯示 Driver IRP | 偵測 Driver Hook |
 | [`windows.driverscan.DriverScan`](Volatility3測試/V3DriverScan.md) | 掃描 Driver | 找隱藏 Driver |
 | [`windows.drivermodule.DriverModule`](Volatility3測試/V3DriverModule.md) | 偵測隱藏 Driver | Rootkit 分析 |
 |  [`windows.modules.Modules`](Volatility3測試/V3Pslist.md) | 列出 Kernel modules | 查看核心模組 |
